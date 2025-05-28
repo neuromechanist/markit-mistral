@@ -13,7 +13,7 @@ import time
 from pathlib import Path
 
 from mistralai import Mistral
-from mistralai.exceptions import MistralException
+from mistralai import SDKError
 
 logger = logging.getLogger(__name__)
 
@@ -125,7 +125,7 @@ class OCRProcessor:
                 logger.info(f"OCR successful on attempt {attempt + 1}")
                 return response
 
-            except MistralException as e:
+            except SDKError as e:
                 last_exception = e
                 logger.warning(f"OCR attempt {attempt + 1} failed: {e}")
 
