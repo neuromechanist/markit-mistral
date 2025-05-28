@@ -50,9 +50,9 @@ def main():
     # Example 2: Process a sample file (if available)
     sample_files = [
         "sample.pdf",
+        "sample_math.pdf",
         "test.png",
         "document.jpg",
-        "../docs/sample.pdf",  # Check docs directory
     ]
 
     print("\nLooking for sample files to process...")
