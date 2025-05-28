@@ -126,9 +126,13 @@ class MarkItMistral:
         file_type = self.file_processor.detect_file_type(input_path)
 
         if file_type == "pdf":
-            response = self.ocr_processor.process_pdf(input_path, self.config.include_images)
+            response = self.ocr_processor.process_pdf(
+                input_path, self.config.include_images
+            )
         elif file_type == "image":
-            response = self.ocr_processor.process_image(input_path, self.config.include_images)
+            response = self.ocr_processor.process_image(
+                input_path, self.config.include_images
+            )
         else:
             raise ValueError(f"Unsupported file type: {input_path.suffix}")
 
@@ -146,7 +150,7 @@ class MarkItMistral:
             logger.info(f"Extracted {len(image_paths)} images")
 
         # Generate markdown content using the formatter
-        document_title = input_path.stem.replace('_', ' ').replace('-', ' ').title()
+        document_title = input_path.stem.replace("_", " ").replace("-", " ").title()
         markdown_content = self.markdown_formatter.format_document(
             pages=response.pages,
             image_paths=image_paths,
@@ -155,7 +159,7 @@ class MarkItMistral:
         )
 
         # Write markdown file
-        with open(output_path, 'w', encoding='utf-8') as f:
+        with open(output_path, "w", encoding="utf-8") as f:
             f.write(markdown_content)
 
         # Extract and log metadata
@@ -213,7 +217,7 @@ class MarkItMistral:
             logger.info(f"Extracted {len(image_paths)} images")
 
         # Generate markdown content using the formatter
-        document_title = output_path.stem.replace('_', ' ').replace('-', ' ').title()
+        document_title = output_path.stem.replace("_", " ").replace("-", " ").title()
         markdown_content = self.markdown_formatter.format_document(
             pages=response.pages,
             image_paths=image_paths,
@@ -222,7 +226,7 @@ class MarkItMistral:
         )
 
         # Write markdown file
-        with open(output_path, 'w', encoding='utf-8') as f:
+        with open(output_path, "w", encoding="utf-8") as f:
             f.write(markdown_content)
 
         # Extract and log metadata
@@ -244,7 +248,7 @@ class MarkItMistral:
         Returns:
             List of supported file extensions.
         """
-        return ['.pdf', '.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif']
+        return [".pdf", ".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".gif"]
 
     def validate_input(self, input_path: str | Path) -> bool:
         """

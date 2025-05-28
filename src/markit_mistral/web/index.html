@@ -236,16 +236,29 @@
 
     <!-- PyScript Configuration -->
     <py-config>
-        packages = ["requests", "base64", "json", "pathlib"]
+        packages = ["json"]
         
         [[fetch]]
         files = ["./static/markit_web.py"]
     </py-config>
 
-    <!-- PyScript Code -->
-    <py-script src="./static/markit_web.py"></py-script>
-
     <!-- JavaScript for UI interactions -->
     <script src="./static/main.js"></script>
+
+    <!-- PyScript Code -->
+    <py-script src="./static/markit_web.py"></py-script>
+    
+    <!-- PyScript Initialization Check -->
+    <script>
+        // Check if PyScript is loaded and working
+        setTimeout(() => {
+            console.log('Checking PyScript status...');
+            if (typeof pyscript !== 'undefined') {
+                console.log('✅ PyScript is loaded');
+            } else {
+                console.log('❌ PyScript failed to load');
+            }
+        }, 3000);
+    </script>
 </body>
 </html> 

@@ -32,7 +32,16 @@ class FileProcessor(ABC):
 class ImageProcessor(FileProcessor):
     """Processor for image files (PNG, JPEG, TIFF, etc.)."""
 
-    SUPPORTED_FORMATS = {'.png', '.jpg', '.jpeg', '.tiff', '.tif', '.bmp', '.gif', '.webp'}
+    SUPPORTED_FORMATS = {
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".tiff",
+        ".tif",
+        ".bmp",
+        ".gif",
+        ".webp",
+    }
 
     def can_process(self, file_path: Path) -> bool:
         """Check if this is a supported image file."""
@@ -83,7 +92,7 @@ class PDFProcessor(FileProcessor):
 
     def can_process(self, file_path: Path) -> bool:
         """Check if this is a PDF file."""
-        return file_path.suffix.lower() == '.pdf'
+        return file_path.suffix.lower() == ".pdf"
 
     def validate_file(self, file_path: Path) -> None:
         """Validate that the PDF file can be processed."""
@@ -95,9 +104,9 @@ class PDFProcessor(FileProcessor):
 
         # Basic PDF validation - check file header
         try:
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 header = f.read(5)
-                if not header.startswith(b'%PDF-'):
+                if not header.startswith(b"%PDF-"):
                     raise ValueError(f"Invalid PDF file: {file_path}")
         except Exception as e:
             raise ValueError(f"Cannot read PDF file: {file_path}") from e
@@ -112,7 +121,8 @@ class PDFProcessor(FileProcessor):
         page_count = None
         try:
             import PyPDF2
-            with open(file_path, 'rb') as f:
+
+            with open(file_path, "rb") as f:
                 reader = PyPDF2.PdfReader(f)
                 page_count = len(reader.pages)
         except Exception:
@@ -170,7 +180,7 @@ class FileProcessorManager:
         extensions = set()
 
         # Add PDF extension
-        extensions.add('.pdf')
+        extensions.add(".pdf")
 
         # Add image extensions
         extensions.update(ImageProcessor.SUPPORTED_FORMATS)

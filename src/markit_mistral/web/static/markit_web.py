@@ -10,6 +10,9 @@ from typing import Any
 import js
 from pyodide.http import pyfetch
 
+# Immediate console logging to verify PyScript is working
+js.console.log("🚀 MarkIt Mistral PyScript starting...")
+
 # Configure logging for browser console
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -17,14 +20,20 @@ logger = logging.getLogger(__name__)
 # Enable debug mode for detailed logging
 DEBUG_MODE = True
 
+
 def debug_log(message: str, data: Any = None):
     """Enhanced debug logging for browser console."""
-    if DEBUG_MODE:
+    try:
         if data is not None:
-            js.console.log(f"[DEBUG] {message}", data)
+            js.console.log(f"[DEBUG] {message}", js.JSON.stringify(data))
         else:
             js.console.log(f"[DEBUG] {message}")
-        logger.debug(f"{message}: {data}" if data else message)
+    except Exception as e:
+        js.console.error(f"Debug log error: {e}")
+
+# Test debug logging immediately
+debug_log("PyScript debug logging initialized")
+
 
 class WebOCRProcessor:
     """
@@ -37,8 +46,13 @@ class WebOCRProcessor:
         self.model = "mistral-ocr-latest"
         self.max_file_size_mb = 50
 
-    async def process_file_data(self, file_data: str, file_name: str, file_type: str,
-                              include_images: bool = True) -> dict[str, Any]:
+    async def process_file_data(
+        self,
+        file_data: str,
+        file_name: str,
+        file_type: str,
+        include_images: bool = True,
+    ) -> dict[str, Any]:
         """
         Process a file from base64 data using Mistral OCR.
 
@@ -52,12 +66,15 @@ class WebOCRProcessor:
             Dictionary with processing results
         """
         try:
-            debug_log("Starting file processing", {
-                "file_name": file_name,
-                "file_type": file_type,
-                "include_images": include_images,
-                "file_data_length": len(file_data) if file_data else 0
-            })
+            debug_log(
+                "Starting file processing",
+                {
+                    "file_name": file_name,
+                    "file_type": file_type,
+                    "include_images": include_images,
+                    "file_data_length": len(file_data) if file_data else 0,
+                },
+            )
 
             logger.info(f"Processing file: {file_name} ({file_type})")
 
@@ -69,16 +86,10 @@ class WebOCRProcessor:
 
             # Prepare document configuration based on file type
             if file_type == "application/pdf":
-                document_config = {
-                    "type": "document_url",
-                    "document_url": file_data
-                }
+                document_config = {"type": "document_url", "document_url": file_data}
                 debug_log("Configured for PDF processing")
             elif file_type.startswith("image/"):
-                document_config = {
-                    "type": "image_url",
-                    "image_url": file_data
-                }
+                document_config = {"type": "image_url", "image_url": file_data}
                 debug_log("Configured for image processing")
             else:
                 raise ValueError(f"Unsupported file type: {file_type}")
@@ -90,7 +101,10 @@ class WebOCRProcessor:
             debug_log("About to make API request to Mistral")
 
             response = await self._make_api_request(document_config, include_images)
-            debug_log("API request completed successfully", {"response_keys": list(response.keys()) if response else None})
+            debug_log(
+                "API request completed successfully",
+                {"response_keys": list(response.keys()) if response else None},
+            )
 
             js.updateProgress("Processing API response...", 70)
 
@@ -105,85 +119,100 @@ class WebOCRProcessor:
                 js.updateProgress("Extracting images...", 80)
                 debug_log("Starting image extraction")
                 extracted_images = self._extract_images(response)
-                debug_log("Image extraction completed", {"image_count": len(extracted_images)})
+                debug_log(
+                    "Image extraction completed", {"image_count": len(extracted_images)}
+                )
 
             result = {
                 "success": True,
                 "markdown": markdown_text,
                 "images": extracted_images,
-                "page_count": len(response.get("pages", []))
+                "page_count": len(response.get("pages", [])),
             }
 
-            debug_log("Processing completed successfully", {
-                "markdown_length": len(markdown_text),
-                "image_count": len(extracted_images),
-                "page_count": result["page_count"]
-            })
+            debug_log(
+                "Processing completed successfully",
+                {
+                    "markdown_length": len(markdown_text),
+                    "image_count": len(extracted_images),
+                    "page_count": result["page_count"],
+                },
+            )
 
             return result
 
         except Exception as e:
             error_msg = str(e)
-            debug_log("Error during processing", {"error": error_msg, "error_type": type(e).__name__})
+            debug_log(
+                "Error during processing",
+                {"error": error_msg, "error_type": type(e).__name__},
+            )
             logger.error(f"Error processing file: {e}")
 
             # Show error in browser console for debugging
             js.console.error(f"Processing error: {error_msg}")
 
-            return {
-                "success": False,
-                "error": error_msg,
-                "markdown": "",
-                "images": []
-            }
+            return {"success": False, "error": error_msg, "markdown": "", "images": []}
 
-    async def _make_api_request(self, document_config: dict, include_images: bool) -> dict:
+    async def _make_api_request(
+        self, document_config: dict, include_images: bool
+    ) -> dict:
         """Make API request to Mistral OCR service."""
 
         url = "https://api.mistral.ai/v1/ocr"
         headers = {
             "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
 
         payload = {
             "model": self.model,
             "document": document_config,
-            "include_image_base64": include_images
+            "include_image_base64": include_images,
         }
 
-        debug_log("Preparing API request", {
-            "url": url,
-            "model": self.model,
-            "document_type": document_config.get("type"),
-            "include_images": include_images,
-            "api_key_length": len(self.api_key) if self.api_key else 0
-        })
+        debug_log(
+            "Preparing API request",
+            {
+                "url": url,
+                "model": self.model,
+                "document_type": document_config.get("type"),
+                "include_images": include_images,
+                "api_key_length": len(self.api_key) if self.api_key else 0,
+            },
+        )
 
         try:
             debug_log("Making API request with pyfetch")
 
             # Use pyodide's fetch for API calls
             response = await pyfetch(
-                url,
-                method="POST",
-                headers=headers,
-                body=json.dumps(payload)
+                url, method="POST", headers=headers, body=json.dumps(payload)
             )
 
-            debug_log("API response received", {
-                "status": response.status,
-                "ok": response.ok,
-                "status_text": response.status if hasattr(response, 'status_text') else "N/A"
-            })
+            debug_log(
+                "API response received",
+                {
+                    "status": response.status,
+                    "ok": response.ok,
+                    "status_text": response.status
+                    if hasattr(response, "status_text")
+                    else "N/A",
+                },
+            )
 
             if not response.ok:
                 error_text = await response.text()
-                debug_log("API Error response", {"status": response.status, "error_text": error_text})
+                debug_log(
+                    "API Error response",
+                    {"status": response.status, "error_text": error_text},
+                )
                 logger.error(f"API Error: {response.status} - {error_text}")
 
                 if response.status == 401:
-                    raise ValueError("Invalid API key. Please check your Mistral API key.")
+                    raise ValueError(
+                        "Invalid API key. Please check your Mistral API key."
+                    )
                 elif response.status == 429:
                     raise ValueError("Rate limit exceeded. Please try again later.")
                 elif response.status == 413:
@@ -193,13 +222,19 @@ class WebOCRProcessor:
 
             debug_log("Parsing API response JSON")
             result = await response.json()
-            debug_log("API response parsed successfully", {"result_keys": list(result.keys()) if result else None})
+            debug_log(
+                "API response parsed successfully",
+                {"result_keys": list(result.keys()) if result else None},
+            )
 
             return result
 
         except Exception as e:
             error_msg = str(e)
-            debug_log("Exception in API request", {"error": error_msg, "error_type": type(e).__name__})
+            debug_log(
+                "Exception in API request",
+                {"error": error_msg, "error_type": type(e).__name__},
+            )
 
             if "Invalid API key" in error_msg or "Rate limit" in error_msg:
                 raise
@@ -226,7 +261,6 @@ class WebOCRProcessor:
             images = page.get("images", [])
             for img_idx, image in enumerate(images):
                 if "image_base64" in image and image["image_base64"]:
-
                     # Get image data
                     image_data = image["image_base64"]
                     if not image_data.startswith("data:"):
@@ -239,11 +273,9 @@ class WebOCRProcessor:
                     else:
                         filename = f"page_{page_idx + 1}_image_{img_idx + 1}.png"
 
-                    extracted_images.append({
-                        "name": filename,
-                        "data": image_data,
-                        "page": page_idx + 1
-                    })
+                    extracted_images.append(
+                        {"name": filename, "data": image_data, "page": page_idx + 1}
+                    )
 
         return extracted_images
 
@@ -261,13 +293,20 @@ async def process_file_handler(event):
 
         # Get data from JavaScript
         data = event.detail
-        debug_log("Event data received", {
-            "file_name": data.get("file_name"),
-            "file_type": data.get("file_type"),
-            "api_key_length": len(data.get("api_key", "")) if data.get("api_key") else 0,
-            "include_images": data.get("include_images"),
-            "file_data_length": len(data.get("file_data", "")) if data.get("file_data") else 0
-        })
+        debug_log(
+            "Event data received",
+            {
+                "file_name": data.get("file_name"),
+                "file_type": data.get("file_type"),
+                "api_key_length": len(data.get("api_key", ""))
+                if data.get("api_key")
+                else 0,
+                "include_images": data.get("include_images"),
+                "file_data_length": len(data.get("file_data", ""))
+                if data.get("file_data")
+                else 0,
+            },
+        )
 
         # Validate required data
         required_fields = ["file_data", "file_name", "file_type", "api_key"]
@@ -287,7 +326,7 @@ async def process_file_handler(event):
             file_data=data["file_data"],
             file_name=data["file_name"],
             file_type=data["file_type"],
-            include_images=data.get("include_images", True)
+            include_images=data.get("include_images", True),
         )
 
         debug_log("File processing completed", {"success": result.get("success")})
@@ -302,14 +341,17 @@ async def process_file_handler(event):
 
     except Exception as e:
         error_msg = str(e)
-        debug_log("Error in process_file_handler", {"error": error_msg, "error_type": type(e).__name__})
+        debug_log(
+            "Error in process_file_handler",
+            {"error": error_msg, "error_type": type(e).__name__},
+        )
         logger.error(f"Error in process_file_handler: {e}")
 
         error_result = {
             "success": False,
             "error": error_msg,
             "markdown": "",
-            "images": []
+            "images": [],
         }
 
         # Try multiple ways to report the error
@@ -327,12 +369,14 @@ async def process_file_handler(event):
 # Set up event listener for file processing
 js.document.addEventListener("processFile", process_file_handler)
 
+
 # Add debug mode control function for JavaScript
 def set_debug_mode(enabled: bool):
     """Control debug mode from JavaScript."""
     global DEBUG_MODE
     DEBUG_MODE = enabled
     debug_log(f"Debug mode {'enabled' if enabled else 'disabled'} from JavaScript")
+
 
 # Expose debug mode control to JavaScript
 js.pyScriptSetDebugMode = set_debug_mode
@@ -344,4 +388,6 @@ debug_log("PyScript backend initialization complete")
 # Update UI to show PyScript is ready
 if hasattr(js, "console"):
     js.console.log("MarkIt Mistral PyScript backend ready")
-    js.console.log("To enable debug mode, check the 'Debug mode' checkbox in the interface")
+    js.console.log(
+        "To enable debug mode, check the 'Debug mode' checkbox in the interface"
+    )

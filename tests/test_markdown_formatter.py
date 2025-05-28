@@ -89,10 +89,7 @@ class TestMarkdownFormatter:
         """Test image reference updating."""
         formatter = MarkdownFormatter()
 
-        image_map = {
-            "image1.png": "images/image1.png",
-            "chart.jpg": "images/chart.jpg"
-        }
+        image_map = {"image1.png": "images/image1.png", "chart.jpg": "images/chart.jpg"}
 
         content = "Here is ![Image 1](image1.png) and ![Chart](chart.jpg)"
         result = formatter._update_image_references(content, image_map)
@@ -126,14 +123,14 @@ $$F = ma$$
 
         metadata = formatter.extract_metadata(content)
 
-        assert metadata['word_count'] > 0
-        assert metadata['char_count'] > 0
-        assert metadata['line_count'] > 0
-        assert len(metadata['headers']) >= 2  # Title and Section
-        assert metadata['math_equations'] >= 2  # Inline and display math
-        assert len(metadata['images']) >= 1
-        assert metadata['tables'] >= 1
-        assert len(metadata['links']) >= 1
+        assert metadata["word_count"] > 0
+        assert metadata["char_count"] > 0
+        assert metadata["line_count"] > 0
+        assert len(metadata["headers"]) >= 2  # Title and Section
+        assert metadata["math_equations"] >= 2  # Inline and display math
+        assert len(metadata["images"]) >= 1
+        assert metadata["tables"] >= 1
+        assert len(metadata["links"]) >= 1
 
     def test_create_image_map_file_paths(self):
         """Test creating image map with file paths."""
@@ -178,7 +175,7 @@ $$F = ma$$
                 pages=pages,
                 image_paths=image_paths,
                 output_dir=output_dir,
-                document_title="Test Document"
+                document_title="Test Document",
             )
 
             assert "# Test Document" in result
@@ -195,4 +192,4 @@ $$F = ma$$
 
         # Should have proper spacing after headers and code blocks
         assert "\n\n" in result
-        assert result.endswith('\n')  # Should end with newline
+        assert result.endswith("\n")  # Should end with newline

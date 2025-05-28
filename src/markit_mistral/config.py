@@ -38,11 +38,16 @@ class Config:
             max_retries=int(os.getenv("MARKIT_MISTRAL_MAX_RETRIES", "3")),
             retry_delay=float(os.getenv("MARKIT_MISTRAL_RETRY_DELAY", "1.0")),
             max_file_size_mb=int(os.getenv("MARKIT_MISTRAL_MAX_FILE_SIZE_MB", "50")),
-            include_images=os.getenv("MARKIT_MISTRAL_INCLUDE_IMAGES", "true").lower() == "true",
-            preserve_math=os.getenv("MARKIT_MISTRAL_PRESERVE_MATH", "true").lower() == "true",
-            base64_images=os.getenv("MARKIT_MISTRAL_BASE64_IMAGES", "false").lower() == "true",
+            include_images=os.getenv("MARKIT_MISTRAL_INCLUDE_IMAGES", "true").lower()
+            == "true",
+            preserve_math=os.getenv("MARKIT_MISTRAL_PRESERVE_MATH", "true").lower()
+            == "true",
+            base64_images=os.getenv("MARKIT_MISTRAL_BASE64_IMAGES", "false").lower()
+            == "true",
             log_level=os.getenv("MARKIT_MISTRAL_LOG_LEVEL", "INFO").upper(),
-            temp_dir=Path(os.getenv("MARKIT_MISTRAL_TEMP_DIR", "/tmp/markit-mistral")) if os.getenv("MARKIT_MISTRAL_TEMP_DIR") else None,
+            temp_dir=Path(os.getenv("MARKIT_MISTRAL_TEMP_DIR", "/tmp/markit-mistral"))
+            if os.getenv("MARKIT_MISTRAL_TEMP_DIR")
+            else None,
         )
 
     def setup_logging(self) -> None:
@@ -52,7 +57,7 @@ class Config:
             format=self.log_format,
             handlers=[
                 logging.StreamHandler(),
-            ]
+            ],
         )
 
         # Set library loggers to WARNING to reduce noise

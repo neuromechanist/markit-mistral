@@ -89,7 +89,9 @@ class OCRProcessor:
         except PermissionError as e:
             raise FileCorruptedError(str(image_path), f"Permission denied: {e}") from e
         except Exception as e:
-            raise FileCorruptedError(str(image_path), f"Failed to read image file: {e}") from e
+            raise FileCorruptedError(
+                str(image_path), f"Failed to read image file: {e}"
+            ) from e
 
         try:
             base64_encoded = base64.b64encode(image_data).decode("utf-8")
@@ -119,7 +121,9 @@ class OCRProcessor:
         except PermissionError as e:
             raise FileCorruptedError(str(pdf_path), f"Permission denied: {e}") from e
         except Exception as e:
-            raise FileCorruptedError(str(pdf_path), f"Failed to read PDF file: {e}") from e
+            raise FileCorruptedError(
+                str(pdf_path), f"Failed to read PDF file: {e}"
+            ) from e
 
         try:
             base64_encoded = base64.b64encode(pdf_data).decode("utf-8")
@@ -127,7 +131,9 @@ class OCRProcessor:
         except Exception as e:
             raise OCRProcessingError(f"Failed to encode PDF as base64: {e}") from e
 
-    def _process_with_retry(self, document_config: dict, include_images: bool = True) -> dict:
+    def _process_with_retry(
+        self, document_config: dict, include_images: bool = True
+    ) -> dict:
         """Process document with retry logic.
 
         Args:
@@ -146,7 +152,7 @@ class OCRProcessor:
                 response = self.client.ocr.process(
                     model=self.model,
                     document=document_config,
-                    include_image_base64=include_images
+                    include_image_base64=include_images,
                 )
 
                 logger.info(f"OCR successful on attempt {attempt + 1}")
@@ -161,7 +167,7 @@ class OCRProcessor:
                     break
 
                 if attempt < self.max_retries - 1:
-                    sleep_time = self.retry_delay * (2 ** attempt)  # Exponential backoff
+                    sleep_time = self.retry_delay * (2**attempt)  # Exponential backoff
                     logger.info(f"Retrying in {sleep_time} seconds...")
                     time.sleep(sleep_time)
                 else:
@@ -172,7 +178,9 @@ class OCRProcessor:
                 logger.error(f"Unexpected error during OCR: {e}")
                 break
 
-        raise last_exception or OCRProcessingError("OCR processing failed after all retries")
+        raise last_exception or OCRProcessingError(
+            "OCR processing failed after all retries"
+        )
 
     def process_pdf(self, pdf_path: str | Path, include_images: bool = True) -> dict:
         """Process a PDF file using Mistral OCR.
@@ -205,10 +213,7 @@ class OCRProcessor:
         try:
             data_uri = self._encode_pdf_to_data_uri(pdf_path)
 
-            document_config = {
-                "type": "document_url",
-                "document_url": data_uri
-            }
+            document_config = {"type": "document_url", "document_url": data_uri}
 
             response = self._process_with_retry(document_config, include_images)
 
@@ -222,7 +227,9 @@ class OCRProcessor:
             logger.error(f"Failed to process PDF {pdf_path}: {e}")
             raise OCRProcessingError(f"PDF processing failed: {e}") from e
 
-    def process_image(self, image_path: str | Path, include_images: bool = True) -> dict:
+    def process_image(
+        self, image_path: str | Path, include_images: bool = True
+    ) -> dict:
         """Process an image file using Mistral OCR.
 
         Args:
@@ -249,14 +256,13 @@ class OCRProcessor:
         try:
             data_uri = self._encode_image_to_data_uri(image_path)
 
-            document_config = {
-                "type": "image_url",
-                "image_url": data_uri
-            }
+            document_config = {"type": "image_url", "image_url": data_uri}
 
             response = self._process_with_retry(document_config, include_images)
 
-            logger.info(f"Successfully processed image with {len(response.pages)} pages")
+            logger.info(
+                f"Successfully processed image with {len(response.pages)} pages"
+            )
             return response
 
         except Exception as e:
@@ -277,16 +283,10 @@ class OCRProcessor:
 
         try:
             # Determine document type based on URL
-            if url.lower().endswith(('.pdf',)) or 'pdf' in url.lower():
-                document_config = {
-                    "type": "document_url",
-                    "document_url": url
-                }
+            if url.lower().endswith((".pdf",)) or "pdf" in url.lower():
+                document_config = {"type": "document_url", "document_url": url}
             else:
-                document_config = {
-                    "type": "image_url",
-                    "image_url": url
-                }
+                document_config = {"type": "image_url", "image_url": url}
 
             response = self._process_with_retry(document_config, include_images)
 
@@ -309,7 +309,7 @@ class OCRProcessor:
         text_parts = []
 
         for page in response.pages:
-            if hasattr(page, 'markdown') and page.markdown:
+            if hasattr(page, "markdown") and page.markdown:
                 text_parts.append(page.markdown)
 
         return "\n\n".join(text_parts)
@@ -330,9 +330,9 @@ class OCRProcessor:
         # First, check if there are any images to extract
         has_images = False
         for page in response.pages:
-            if hasattr(page, 'images') and page.images:
+            if hasattr(page, "images") and page.images:
                 for image in page.images:
-                    if hasattr(image, 'image_base64') and image.image_base64:
+                    if hasattr(image, "image_base64") and image.image_base64:
                         has_images = True
                         break
             if has_images:
@@ -347,33 +347,35 @@ class OCRProcessor:
         output_dir.mkdir(parents=True, exist_ok=True)
 
         for page_idx, page in enumerate(response.pages):
-            if hasattr(page, 'images') and page.images:
+            if hasattr(page, "images") and page.images:
                 for image in page.images:
-                    if hasattr(image, 'image_base64') and image.image_base64:
+                    if hasattr(image, "image_base64") and image.image_base64:
                         try:
                             # Parse the base64 data URI
-                            if image.image_base64.startswith('data:'):
-                                header, data = image.image_base64.split(',', 1)
+                            if image.image_base64.startswith("data:"):
+                                header, data = image.image_base64.split(",", 1)
                                 image_data = base64.b64decode(data)
                             else:
                                 image_data = base64.b64decode(image.image_base64)
 
                             # Use the image ID as filename, or generate one
-                            if hasattr(image, 'id') and image.id:
+                            if hasattr(image, "id") and image.id:
                                 filename = image.id
                             else:
                                 filename = f"page_{page_idx + 1}_image_{len(saved_images) + 1}.jpg"
 
                             image_path = output_dir / filename
 
-                            with open(image_path, 'wb') as f:
+                            with open(image_path, "wb") as f:
                                 f.write(image_data)
 
                             saved_images.append(image_path)
                             logger.debug(f"Saved image: {image_path}")
 
                         except Exception as e:
-                            logger.warning(f"Failed to save image from page {page_idx + 1}: {e}")
+                            logger.warning(
+                                f"Failed to save image from page {page_idx + 1}: {e}"
+                            )
 
         logger.info(f"Extracted {len(saved_images)} images to {output_dir}")
         return saved_images
@@ -387,7 +389,7 @@ class OCRProcessor:
         Returns:
             Number of pages processed.
         """
-        return len(response.pages) if hasattr(response, 'pages') else 0
+        return len(response.pages) if hasattr(response, "pages") else 0
 
     def get_page_text(self, response: dict, page_index: int) -> str:
         """Get text from a specific page.
@@ -399,8 +401,8 @@ class OCRProcessor:
         Returns:
             Markdown text from the specified page.
         """
-        if not hasattr(response, 'pages') or page_index >= len(response.pages):
+        if not hasattr(response, "pages") or page_index >= len(response.pages):
             raise IndexError(f"Page index {page_index} out of range")
 
         page = response.pages[page_index]
-        return page.markdown if hasattr(page, 'markdown') else ""
+        return page.markdown if hasattr(page, "markdown") else ""

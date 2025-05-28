@@ -120,8 +120,8 @@ class TestCLIParser:
 class TestCLIMain:
     """Test cases for CLI main function."""
 
-    @patch('markit_mistral.cli.MarkItMistral')
-    @patch('markit_mistral.cli.Config')
+    @patch("markit_mistral.cli.MarkItMistral")
+    @patch("markit_mistral.cli.Config")
     def test_main_with_file_input(self, mock_config_class, mock_converter_class):
         """Test main function with file input."""
         # Setup mocks
@@ -138,26 +138,26 @@ class TestCLIMain:
             input_file = temp_path / "test.pdf"
             input_file.touch()  # Create empty file
 
-            with patch('sys.argv', ['markit-mistral', str(input_file)]):
+            with patch("sys.argv", ["markit-mistral", str(input_file)]):
                 result = main()
 
                 assert result == 0
                 mock_converter.convert_file.assert_called_once()
 
-    @patch('markit_mistral.cli.MarkItMistral')
-    @patch('markit_mistral.cli.Config')
+    @patch("markit_mistral.cli.MarkItMistral")
+    @patch("markit_mistral.cli.Config")
     def test_main_file_not_found(self, mock_config_class, _mock_converter_class):
         """Test main function with non-existent file."""
         mock_config = Mock()
         mock_config_class.from_env.return_value = mock_config
 
-        with patch('sys.argv', ['markit-mistral', 'nonexistent.pdf']):
+        with patch("sys.argv", ["markit-mistral", "nonexistent.pdf"]):
             result = main()
 
             assert result == 1
 
-    @patch('markit_mistral.cli.MarkItMistral')
-    @patch('markit_mistral.cli.Config')
+    @patch("markit_mistral.cli.MarkItMistral")
+    @patch("markit_mistral.cli.Config")
     def test_main_unsupported_file(self, mock_config_class, mock_converter_class):
         """Test main function with unsupported file type."""
         mock_config = Mock()
@@ -166,49 +166,54 @@ class TestCLIMain:
         mock_converter = Mock()
         mock_converter_class.return_value = mock_converter
         mock_converter.file_processor.is_supported.return_value = False
-        mock_converter.file_processor.get_supported_extensions.return_value = ['.pdf', '.png']
+        mock_converter.file_processor.get_supported_extensions.return_value = [
+            ".pdf",
+            ".png",
+        ]
 
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
             input_file = temp_path / "test.txt"
             input_file.touch()
 
-            with patch('sys.argv', ['markit-mistral', str(input_file)]):
+            with patch("sys.argv", ["markit-mistral", str(input_file)]):
                 result = main()
 
                 assert result == 1
 
-    @patch('markit_mistral.cli.MarkItMistral')
-    @patch('markit_mistral.cli.Config')
-    @patch('sys.stdin')
+    @patch("markit_mistral.cli.MarkItMistral")
+    @patch("markit_mistral.cli.Config")
+    @patch("sys.stdin")
     def test_main_stdin_tty(self, mock_stdin, mock_config_class, _mock_converter_class):
         """Test main function with stdin from TTY."""
         mock_stdin.isatty.return_value = True
         mock_config = Mock()
         mock_config_class.from_env.return_value = mock_config
 
-        with patch('sys.argv', ['markit-mistral']):
+        with patch("sys.argv", ["markit-mistral"]):
             result = main()
 
             assert result == 1
 
-    @patch('markit_mistral.cli.MarkItMistral')
-    @patch('markit_mistral.cli.Config')
-    @patch('sys.stdin')
-    def test_main_stdin_empty(self, mock_stdin, mock_config_class, _mock_converter_class):
+    @patch("markit_mistral.cli.MarkItMistral")
+    @patch("markit_mistral.cli.Config")
+    @patch("sys.stdin")
+    def test_main_stdin_empty(
+        self, mock_stdin, mock_config_class, _mock_converter_class
+    ):
         """Test main function with empty stdin."""
         mock_stdin.isatty.return_value = False
-        mock_stdin.buffer.read.return_value = b''
+        mock_stdin.buffer.read.return_value = b""
         mock_config = Mock()
         mock_config_class.from_env.return_value = mock_config
 
-        with patch('sys.argv', ['markit-mistral']):
+        with patch("sys.argv", ["markit-mistral"]):
             result = main()
 
             assert result == 1
 
-    @patch('markit_mistral.cli.MarkItMistral')
-    @patch('markit_mistral.cli.Config')
+    @patch("markit_mistral.cli.MarkItMistral")
+    @patch("markit_mistral.cli.Config")
     def test_main_with_verbose(self, mock_config_class, mock_converter_class):
         """Test main function with verbose flag."""
         mock_config = Mock()
@@ -225,16 +230,16 @@ class TestCLIMain:
             input_file.touch()
 
             with (
-                patch('sys.argv', ['markit-mistral', str(input_file), '--verbose']),
-                patch('traceback.print_exc')
+                patch("sys.argv", ["markit-mistral", str(input_file), "--verbose"]),
+                patch("traceback.print_exc"),
             ):
                 result = main()
 
                 assert result == 0
                 assert mock_config.log_level == "DEBUG"
 
-    @patch('markit_mistral.cli.MarkItMistral')
-    @patch('markit_mistral.cli.Config')
+    @patch("markit_mistral.cli.MarkItMistral")
+    @patch("markit_mistral.cli.Config")
     def test_main_with_quiet(self, mock_config_class, mock_converter_class):
         """Test main function with quiet flag."""
         mock_config = Mock()
@@ -250,14 +255,14 @@ class TestCLIMain:
             input_file = temp_path / "test.pdf"
             input_file.touch()
 
-            with patch('sys.argv', ['markit-mistral', str(input_file), '--quiet']):
+            with patch("sys.argv", ["markit-mistral", str(input_file), "--quiet"]):
                 result = main()
 
                 assert result == 0
                 assert mock_config.log_level == "ERROR"
 
-    @patch('markit_mistral.cli.MarkItMistral')
-    @patch('markit_mistral.cli.Config')
+    @patch("markit_mistral.cli.MarkItMistral")
+    @patch("markit_mistral.cli.Config")
     def test_main_with_no_images(self, mock_config_class, mock_converter_class):
         """Test main function with no-images flag."""
         mock_config = Mock()
@@ -273,14 +278,14 @@ class TestCLIMain:
             input_file = temp_path / "test.pdf"
             input_file.touch()
 
-            with patch('sys.argv', ['markit-mistral', str(input_file), '--no-images']):
+            with patch("sys.argv", ["markit-mistral", str(input_file), "--no-images"]):
                 result = main()
 
                 assert result == 0
                 assert mock_config.include_images is False
 
-    @patch('markit_mistral.cli.MarkItMistral')
-    @patch('markit_mistral.cli.Config')
+    @patch("markit_mistral.cli.MarkItMistral")
+    @patch("markit_mistral.cli.Config")
     def test_main_with_output_management(self, mock_config_class, mock_converter_class):
         """Test main function with output management flags."""
         mock_config = Mock()
@@ -297,15 +302,23 @@ class TestCLIMain:
             input_file = temp_path / "test.pdf"
             input_file.touch()
 
-            with patch('sys.argv', ['markit-mistral', str(input_file), '--no-metadata', '--create-archive']):
+            with patch(
+                "sys.argv",
+                [
+                    "markit-mistral",
+                    str(input_file),
+                    "--no-metadata",
+                    "--create-archive",
+                ],
+            ):
                 result = main()
 
                 assert result == 0
                 assert mock_converter.output_manager.preserve_metadata is False
                 assert mock_converter.output_manager.create_zip_archive is True
 
-    @patch('markit_mistral.cli.MarkItMistral')
-    @patch('markit_mistral.cli.Config')
+    @patch("markit_mistral.cli.MarkItMistral")
+    @patch("markit_mistral.cli.Config")
     def test_main_exception_handling(self, mock_config_class, mock_converter_class):
         """Test main function exception handling."""
         mock_config = Mock()
@@ -321,14 +334,16 @@ class TestCLIMain:
             input_file = temp_path / "test.pdf"
             input_file.touch()
 
-            with patch('sys.argv', ['markit-mistral', str(input_file)]):
+            with patch("sys.argv", ["markit-mistral", str(input_file)]):
                 result = main()
 
                 assert result == 1
 
-    @patch('markit_mistral.cli.MarkItMistral')
-    @patch('markit_mistral.cli.Config')
-    def test_main_exception_handling_verbose(self, mock_config_class, mock_converter_class):
+    @patch("markit_mistral.cli.MarkItMistral")
+    @patch("markit_mistral.cli.Config")
+    def test_main_exception_handling_verbose(
+        self, mock_config_class, mock_converter_class
+    ):
         """Test main function exception handling with verbose output."""
         mock_config = Mock()
         mock_config_class.from_env.return_value = mock_config
@@ -344,8 +359,8 @@ class TestCLIMain:
             input_file.touch()
 
             with (
-                patch('sys.argv', ['markit-mistral', str(input_file), '--verbose']),
-                patch('traceback.print_exc')
+                patch("sys.argv", ["markit-mistral", str(input_file), "--verbose"]),
+                patch("traceback.print_exc"),
             ):
                 result = main()
 

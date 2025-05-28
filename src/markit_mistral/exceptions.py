@@ -30,13 +30,16 @@ class MarkItMistralError(Exception):
 
 class ConfigurationError(MarkItMistralError):
     """Raised when there's a configuration issue."""
+
     pass
 
 
 class APIError(MarkItMistralError):
     """Raised when there's an API-related error."""
 
-    def __init__(self, message: str, status_code: int | None = None, details: str | None = None):
+    def __init__(
+        self, message: str, status_code: int | None = None, details: str | None = None
+    ):
         """
         Initialize the API error.
 
@@ -55,7 +58,7 @@ class APIKeyError(APIError):
     def __init__(self, message: str = "Invalid or missing API key"):
         super().__init__(
             message,
-            details="Please set the MISTRAL_API_KEY environment variable or pass --api-key"
+            details="Please set the MISTRAL_API_KEY environment variable or pass --api-key",
         )
 
 
@@ -65,14 +68,16 @@ class APIQuotaError(APIError):
     def __init__(self, message: str = "API quota exceeded"):
         super().__init__(
             message,
-            details="Please check your Mistral API usage limits and try again later"
+            details="Please check your Mistral API usage limits and try again later",
         )
 
 
 class APIRateLimitError(APIError):
     """Raised when API rate limit is hit."""
 
-    def __init__(self, message: str = "API rate limit exceeded", retry_after: int | None = None):
+    def __init__(
+        self, message: str = "API rate limit exceeded", retry_after: int | None = None
+    ):
         details = "Please wait before making more requests"
         if retry_after:
             details += f" (retry after {retry_after} seconds)"
@@ -82,6 +87,7 @@ class APIRateLimitError(APIError):
 
 class FileProcessingError(MarkItMistralError):
     """Raised when there's a file processing issue."""
+
     pass
 
 
@@ -98,6 +104,7 @@ class UnsupportedFileTypeError(FileProcessingError):
 
 class FileNotFoundError(FileProcessingError):
     """Raised when a required file is not found."""
+
     pass
 
 
@@ -121,6 +128,7 @@ class FileTooLargeError(FileProcessingError):
 
 class OCRProcessingError(MarkItMistralError):
     """Raised when OCR processing fails."""
+
     pass
 
 
@@ -135,16 +143,19 @@ class OCRTimeoutError(OCRProcessingError):
 
 class MarkdownGenerationError(MarkItMistralError):
     """Raised when markdown generation fails."""
+
     pass
 
 
 class ImageExtractionError(MarkItMistralError):
     """Raised when image extraction fails."""
+
     pass
 
 
 class OutputError(MarkItMistralError):
     """Raised when there's an output-related error."""
+
     pass
 
 
@@ -170,6 +181,7 @@ class DiskSpaceError(OutputError):
 
 class ValidationError(MarkItMistralError):
     """Raised when input validation fails."""
+
     pass
 
 
@@ -228,7 +240,9 @@ def handle_file_error(error: Exception) -> str:
         "MemoryError": "Insufficient memory. Try processing a smaller file.",
     }
 
-    return error_messages.get(error_type, f"An unexpected error occurred: {error_message}")
+    return error_messages.get(
+        error_type, f"An unexpected error occurred: {error_message}"
+    )
 
 
 def get_user_friendly_message(error: Exception) -> str:
@@ -256,4 +270,6 @@ def get_user_friendly_message(error: Exception) -> str:
         "MemoryError": "Insufficient memory. Try processing a smaller file.",
     }
 
-    return error_messages.get(error_type, f"An unexpected error occurred: {error_message}")
+    return error_messages.get(
+        error_type, f"An unexpected error occurred: {error_message}"
+    )

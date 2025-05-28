@@ -50,10 +50,10 @@ class TestOutputManager:
                 include_images=True,
             )
 
-            assert structure['output_dir'] == output_path.parent
-            assert structure['markdown_path'] == output_path
-            assert structure['metadata_path'] == temp_path / "output_metadata.json"
-            assert structure['images_dir'] == temp_path / "output_images"
+            assert structure["output_dir"] == output_path.parent
+            assert structure["markdown_path"] == output_path
+            assert structure["metadata_path"] == temp_path / "output_metadata.json"
+            assert structure["images_dir"] == temp_path / "output_images"
 
     def test_prepare_output_structure_without_output_path(self):
         """Test preparing output structure without specified output path."""
@@ -67,10 +67,10 @@ class TestOutputManager:
                 include_images=False,
             )
 
-            assert structure['output_dir'] == temp_path
-            assert structure['markdown_path'] == temp_path / "test.md"
-            assert structure['metadata_path'] == temp_path / "test_metadata.json"
-            assert 'images_dir' not in structure
+            assert structure["output_dir"] == temp_path
+            assert structure["markdown_path"] == temp_path / "test.md"
+            assert structure["metadata_path"] == temp_path / "test_metadata.json"
+            assert "images_dir" not in structure
 
     def test_generate_output_filename_default(self):
         """Test default filename generation."""
@@ -94,7 +94,7 @@ class TestOutputManager:
 
             assert filename == temp_path / "document_converted.md"
 
-    @patch('markit_mistral.output_manager.datetime')
+    @patch("markit_mistral.output_manager.datetime")
     def test_generate_output_filename_with_timestamp(self, mock_datetime):
         """Test filename generation with timestamp."""
         mock_datetime.now.return_value.strftime.return_value = "20240101_120000"
@@ -129,13 +129,13 @@ class TestOutputManager:
 
             assert metadata_path.exists()
 
-            with open(metadata_path, encoding='utf-8') as f:
+            with open(metadata_path, encoding="utf-8") as f:
                 saved_metadata = json.load(f)
 
-            assert 'conversion_info' in saved_metadata
-            assert saved_metadata['input_file'] == input_info
-            assert saved_metadata['content_metadata'] == conversion_metadata
-            assert saved_metadata['processing_stats'] == processing_stats
+            assert "conversion_info" in saved_metadata
+            assert saved_metadata["input_file"] == input_info
+            assert saved_metadata["content_metadata"] == conversion_metadata
+            assert saved_metadata["processing_stats"] == processing_stats
 
     def test_save_metadata_disabled(self):
         """Test that metadata is not saved when disabled."""
@@ -170,9 +170,9 @@ class TestOutputManager:
             image_path.write_bytes(b"fake image data")
 
             output_structure = {
-                'markdown_path': markdown_path,
-                'metadata_path': metadata_path,
-                'images_dir': images_dir,
+                "markdown_path": markdown_path,
+                "metadata_path": metadata_path,
+                "images_dir": images_dir,
             }
 
             manager = OutputManager(create_zip_archive=True)
@@ -180,14 +180,14 @@ class TestOutputManager:
 
             assert archive_path is not None
             assert archive_path.exists()
-            assert archive_path.suffix == '.zip'
+            assert archive_path.suffix == ".zip"
 
             # Verify archive contents
-            with zipfile.ZipFile(archive_path, 'r') as zipf:
+            with zipfile.ZipFile(archive_path, "r") as zipf:
                 names = zipf.namelist()
-                assert 'test.md' in names
-                assert 'test_metadata.json' in names
-                assert 'test_images/image1.jpg' in names
+                assert "test.md" in names
+                assert "test_metadata.json" in names
+                assert "test_images/image1.jpg" in names
 
     def test_create_archive_disabled(self):
         """Test that archive is not created when disabled."""
@@ -245,18 +245,18 @@ class TestOutputManager:
             image_path.write_bytes(b"fake image data")
 
             output_structure = {
-                'markdown_path': markdown_path,
-                'images_dir': images_dir,
+                "markdown_path": markdown_path,
+                "images_dir": images_dir,
             }
 
             manager = OutputManager()
             summary = manager.get_output_summary(output_structure)
 
-            assert summary['images_count'] == 1
-            assert summary['total_size_bytes'] > 0
-            assert len(summary['files_created']) == 2  # markdown + image
+            assert summary["images_count"] == 1
+            assert summary["total_size_bytes"] > 0
+            assert len(summary["files_created"]) == 2  # markdown + image
 
             # Check file types
-            file_types = [f['type'] for f in summary['files_created']]
-            assert 'markdown_path' in file_types
-            assert 'image' in file_types
+            file_types = [f["type"] for f in summary["files_created"]]
+            assert "markdown_path" in file_types
+            assert "image" in file_types

@@ -73,15 +73,15 @@ class OutputManager:
         output_dir.mkdir(parents=True, exist_ok=True)
 
         structure = {
-            'output_dir': output_dir,
-            'markdown_path': markdown_path,
-            'metadata_path': output_dir / f"{markdown_path.stem}_metadata.json",
+            "output_dir": output_dir,
+            "markdown_path": markdown_path,
+            "metadata_path": output_dir / f"{markdown_path.stem}_metadata.json",
         }
 
         # Add images directory if needed
         if include_images:
             images_dir = output_dir / f"{markdown_path.stem}_images"
-            structure['images_dir'] = images_dir
+            structure["images_dir"] = images_dir
 
         return structure
 
@@ -102,10 +102,10 @@ class OutputManager:
             # Apply custom naming pattern
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             name_vars = {
-                'original': base_name,
-                'timestamp': timestamp,
-                'date': datetime.now().strftime("%Y%m%d"),
-                'time': datetime.now().strftime("%H%M%S"),
+                "original": base_name,
+                "timestamp": timestamp,
+                "date": datetime.now().strftime("%Y%m%d"),
+                "time": datetime.now().strftime("%H%M%S"),
             }
 
             try:
@@ -118,8 +118,8 @@ class OutputManager:
             filename = base_name
 
         # Ensure .md extension
-        if not filename.endswith('.md'):
-            filename += '.md'
+        if not filename.endswith(".md"):
+            filename += ".md"
 
         return output_dir / filename
 
@@ -143,20 +143,20 @@ class OutputManager:
             return
 
         metadata = {
-            'conversion_info': {
-                'timestamp': datetime.now().isoformat(),
-                'tool': 'markit-mistral',
-                'version': '0.1.0',  # TODO: Get from package
+            "conversion_info": {
+                "timestamp": datetime.now().isoformat(),
+                "tool": "markit-mistral",
+                "version": "0.1.0",  # TODO: Get from package
             },
-            'input_file': input_info,
-            'content_metadata': conversion_metadata,
+            "input_file": input_info,
+            "content_metadata": conversion_metadata,
         }
 
         if processing_stats:
-            metadata['processing_stats'] = processing_stats
+            metadata["processing_stats"] = processing_stats
 
         try:
-            with open(metadata_path, 'w', encoding='utf-8') as f:
+            with open(metadata_path, "w", encoding="utf-8") as f:
                 json.dump(metadata, f, indent=2, ensure_ascii=False)
 
             logger.debug(f"Saved metadata to {metadata_path}")
@@ -183,32 +183,39 @@ class OutputManager:
 
         try:
             if archive_path is None:
-                markdown_path = output_structure['markdown_path']
-                archive_path = markdown_path.parent / f"{markdown_path.stem}_complete.zip"
+                markdown_path = output_structure["markdown_path"]
+                archive_path = (
+                    markdown_path.parent / f"{markdown_path.stem}_complete.zip"
+                )
 
-            with zipfile.ZipFile(archive_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            with zipfile.ZipFile(archive_path, "w", zipfile.ZIP_DEFLATED) as zipf:
                 # Add markdown file
-                if output_structure['markdown_path'].exists():
+                if output_structure["markdown_path"].exists():
                     zipf.write(
-                        output_structure['markdown_path'],
-                        output_structure['markdown_path'].name
+                        output_structure["markdown_path"],
+                        output_structure["markdown_path"].name,
                     )
 
                 # Add metadata file
-                if 'metadata_path' in output_structure and output_structure['metadata_path'].exists():
+                if (
+                    "metadata_path" in output_structure
+                    and output_structure["metadata_path"].exists()
+                ):
                     zipf.write(
-                        output_structure['metadata_path'],
-                        output_structure['metadata_path'].name
+                        output_structure["metadata_path"],
+                        output_structure["metadata_path"].name,
                     )
 
                 # Add images directory
-                if 'images_dir' in output_structure and output_structure['images_dir'].exists():
-                    images_dir = output_structure['images_dir']
+                if (
+                    "images_dir" in output_structure
+                    and output_structure["images_dir"].exists()
+                ):
+                    images_dir = output_structure["images_dir"]
                     for image_file in images_dir.iterdir():
                         if image_file.is_file():
                             zipf.write(
-                                image_file,
-                                f"{images_dir.name}/{image_file.name}"
+                                image_file, f"{images_dir.name}/{image_file.name}"
                             )
 
             logger.info(f"Created archive: {archive_path}")
@@ -233,6 +240,7 @@ class OutputManager:
                     elif temp_path.is_dir():
                         # Remove directory and contents
                         import shutil
+
                         shutil.rmtree(temp_path)
                     logger.debug(f"Cleaned up temporary file: {temp_path}")
             except Exception as e:
@@ -250,7 +258,7 @@ class OutputManager:
         """
         try:
             # Try to create a temporary file
-            test_file = output_dir / '.markit_mistral_test'
+            test_file = output_dir / ".markit_mistral_test"
             test_file.touch()
             test_file.unlink()
             return True
@@ -268,33 +276,37 @@ class OutputManager:
             Summary information about the outputs.
         """
         summary = {
-            'files_created': [],
-            'total_size_bytes': 0,
-            'images_count': 0,
+            "files_created": [],
+            "total_size_bytes": 0,
+            "images_count": 0,
         }
 
         for key, path in output_structure.items():
             if path.exists():
                 if path.is_file():
                     size = path.stat().st_size
-                    summary['files_created'].append({
-                        'type': key,
-                        'path': str(path),
-                        'size_bytes': size,
-                    })
-                    summary['total_size_bytes'] += size
-                elif path.is_dir() and 'images' in key:
+                    summary["files_created"].append(
+                        {
+                            "type": key,
+                            "path": str(path),
+                            "size_bytes": size,
+                        }
+                    )
+                    summary["total_size_bytes"] += size
+                elif path.is_dir() and "images" in key:
                     # Count images in directory
                     image_files = [f for f in path.iterdir() if f.is_file()]
-                    summary['images_count'] = len(image_files)
+                    summary["images_count"] = len(image_files)
 
                     for img_file in image_files:
                         size = img_file.stat().st_size
-                        summary['files_created'].append({
-                            'type': 'image',
-                            'path': str(img_file),
-                            'size_bytes': size,
-                        })
-                        summary['total_size_bytes'] += size
+                        summary["files_created"].append(
+                            {
+                                "type": "image",
+                                "path": str(img_file),
+                                "size_bytes": size,
+                            }
+                        )
+                        summary["total_size_bytes"] += size
 
         return summary
