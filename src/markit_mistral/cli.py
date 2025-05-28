@@ -112,6 +112,32 @@ Examples:
         help="enable batch processing mode for multiple files"
     )
 
+    parser.add_argument(
+        "--save-metadata",
+        action="store_true",
+        default=True,
+        help="save conversion metadata to JSON file (default: True)"
+    )
+
+    parser.add_argument(
+        "--no-metadata",
+        action="store_true",
+        help="skip saving conversion metadata"
+    )
+
+    parser.add_argument(
+        "--create-archive",
+        action="store_true",
+        help="create a zip archive with all output files"
+    )
+
+    parser.add_argument(
+        "--output-format",
+        choices=["markdown", "json", "both"],
+        default="markdown",
+        help="output format (default: markdown)"
+    )
+
     return parser
 
 
@@ -157,6 +183,12 @@ def main() -> int:
 
         # Create converter
         converter = MarkItMistral(config=config)
+
+        # Configure output manager
+        if hasattr(args, 'no_metadata') and args.no_metadata:
+            converter.output_manager.preserve_metadata = False
+        if hasattr(args, 'create_archive') and args.create_archive:
+            converter.output_manager.create_zip_archive = True
 
         # Determine input source
         if args.input:

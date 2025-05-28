@@ -9,9 +9,10 @@ import logging
 from pathlib import Path
 
 from .config import Config
-from .file_processor import create_file_processor
+from .file_processor import create_file_processor, FileProcessorManager
 from .markdown_formatter import MarkdownFormatter
 from .ocr_processor import OCRProcessor
+from .output_manager import OutputManager
 
 logger = logging.getLogger(__name__)
 
@@ -66,16 +67,19 @@ class MarkItMistral:
         self.config.validate()
 
         # Initialize components
+        self.file_processor = create_file_processor()
         self.ocr_processor = OCRProcessor(
             api_key=self.config.mistral_api_key,
             max_retries=self.config.max_retries,
             retry_delay=self.config.retry_delay,
-            max_file_size_mb=self.config.max_file_size_mb,
         )
-        self.file_processor = create_file_processor()
         self.markdown_formatter = MarkdownFormatter(
             preserve_math=self.config.preserve_math,
             base64_images=self.config.base64_images,
+        )
+        self.output_manager = OutputManager(
+            preserve_metadata=True,
+            create_zip_archive=False,  # Can be configured later
         )
 
     def convert_file(
