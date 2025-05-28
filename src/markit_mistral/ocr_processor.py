@@ -27,7 +27,13 @@ class OCRProcessor:
     for optimal text extraction with math equation preservation.
     """
     
-    def __init__(self, api_key: Optional[str] = None, max_retries: int = 3, retry_delay: float = 1.0, max_file_size_mb: int = 50):
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        max_retries: int = 3,
+        retry_delay: float = 1.0,
+        max_file_size_mb: int = 50,
+    ):
         """
         Initialize the OCR processor.
         
@@ -195,7 +201,10 @@ class OCRProcessor:
         # Check file size limit
         max_size_bytes = self.max_file_size_mb * 1024 * 1024
         if file_size > max_size_bytes:
-            raise ValueError(f"Image file too large: {file_size / (1024 * 1024):.2f} MB (max {self.max_file_size_mb} MB)")
+            raise ValueError(
+                f"Image file too large: {file_size / (1024 * 1024):.2f} MB "
+                f"(max {self.max_file_size_mb} MB)"
+            )
         
         try:
             data_uri = self._encode_image_to_data_uri(image_path)

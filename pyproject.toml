@@ -65,10 +65,10 @@ docs = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yahya/markit-mistral"
-Documentation = "https://github.com/yahya/markit-mistral#readme"
-Repository = "https://github.com/yahya/markit-mistral.git"
-Issues = "https://github.com/yahya/markit-mistral/issues"
+Homepage = "https://github.com/neuromechanist/markit-mistral"
+Documentation = "https://github.com/neuromechanist/markit-mistral#readme"
+Repository = "https://github.com/neuromechanist/markit-mistral.git"
+Issues = "https://github.com/neuromechanist/markit-mistral/issues"
 
 [project.scripts]
 markit-mistral = "markit_mistral.__main__:main"

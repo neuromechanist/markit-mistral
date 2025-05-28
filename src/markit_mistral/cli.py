@@ -7,7 +7,6 @@ Provides a CLI similar to markitdown but using Mistral AI for OCR processing.
 import argparse
 import sys
 from pathlib import Path
-from typing import Optional
 
 from . import __version__, __description__
 from .config import Config

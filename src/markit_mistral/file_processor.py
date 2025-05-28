@@ -4,7 +4,7 @@ import logging
 import mimetypes
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import BinaryIO, Dict, List, Optional, Union
+from typing import Dict, List, Union
 
 from PIL import Image
 

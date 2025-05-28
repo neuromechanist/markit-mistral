@@ -12,6 +12,7 @@ from typing import Dict, List, Optional, Union
 
 from .config import Config
 from .file_processor import create_file_processor
+from .markdown_formatter import MarkdownFormatter
 from .ocr_processor import OCRProcessor
 
 logger = logging.getLogger(__name__)
@@ -74,6 +75,10 @@ class MarkItMistral:
             max_file_size_mb=self.config.max_file_size_mb,
         )
         self.file_processor = create_file_processor()
+        self.markdown_formatter = MarkdownFormatter(
+            preserve_math=self.config.preserve_math,
+            base64_images=self.config.base64_images,
+        )
 
     def convert_file(
         self,
@@ -94,8 +99,12 @@ class MarkItMistral:
         """
         input_path = Path(input_path)
         
-        if not input_path.exists():
-            raise FileNotFoundError(f"Input file not found: {input_path}")
+        # Validate input file
+        self.file_processor.validate_file(input_path)
+        
+        # Get file info for logging
+        file_info = self.file_processor.get_file_info(input_path)
+        logger.info(f"Processing {file_info['name']} ({file_info['size_mb']} MB)")
         
         # Determine output paths
         if output_path is None:
@@ -115,9 +124,11 @@ class MarkItMistral:
         logger.info(f"Converting {input_path} to {output_path}")
         
         # Process the file based on its type
-        if input_path.suffix.lower() == '.pdf':
+        file_type = self.file_processor.detect_file_type(input_path)
+        
+        if file_type == "pdf":
             response = self.ocr_processor.process_pdf(input_path, self.config.include_images)
-        elif input_path.suffix.lower() in ['.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif']:
+        elif file_type == "image":
             response = self.ocr_processor.process_image(input_path, self.config.include_images)
         else:
             raise ValueError(f"Unsupported file type: {input_path.suffix}")
@@ -125,18 +136,37 @@ class MarkItMistral:
         # Extract and save images if requested
         image_paths = []
         if self.config.include_images:
-            image_paths = self.ocr_processor.extract_images(response, output_dir)
+            # Create images subdirectory if needed
+            if not self.config.base64_images:
+                images_dir = output_dir / f"{output_path.stem}_images"
+                images_dir.mkdir(exist_ok=True)
+            else:
+                images_dir = output_dir
+            
+            image_paths = self.ocr_processor.extract_images(response, images_dir)
+            logger.info(f"Extracted {len(image_paths)} images")
         
-        # Generate markdown content
-        markdown_content = self._generate_markdown(response, image_paths, output_dir)
-        
-        # Apply math equation processing if enabled
-        if self.config.preserve_math:
-            markdown_content = self._process_math_equations(markdown_content)
+        # Generate markdown content using the formatter
+        document_title = input_path.stem.replace('_', ' ').replace('-', ' ').title()
+        markdown_content = self.markdown_formatter.format_document(
+            pages=response.pages,
+            image_paths=image_paths,
+            output_dir=output_dir,
+            document_title=document_title,
+        )
         
         # Write markdown file
         with open(output_path, 'w', encoding='utf-8') as f:
             f.write(markdown_content)
+        
+        # Extract and log metadata
+        metadata = self.markdown_formatter.extract_metadata(markdown_content)
+        logger.info(
+            f"Generated markdown: {metadata['word_count']} words, "
+            f"{metadata['math_equations']} math equations, "
+            f"{len(metadata['images'])} images, "
+            f"{metadata['tables']} tables"
+        )
         
         logger.info(f"Successfully converted to {output_path}")
         return output_path
@@ -176,134 +206,40 @@ class MarkItMistral:
         # Extract and save images if requested
         image_paths = []
         if self.config.include_images:
-            image_paths = self.ocr_processor.extract_images(response, output_dir)
+            # Create images subdirectory if needed
+            if not self.config.base64_images:
+                images_dir = output_dir / f"{output_path.stem}_images"
+                images_dir.mkdir(exist_ok=True)
+            else:
+                images_dir = output_dir
+            
+            image_paths = self.ocr_processor.extract_images(response, images_dir)
+            logger.info(f"Extracted {len(image_paths)} images")
         
-        # Generate markdown content
-        markdown_content = self._generate_markdown(response, image_paths, output_dir)
-        
-        # Apply math equation processing if enabled
-        if self.config.preserve_math:
-            markdown_content = self._process_math_equations(markdown_content)
+        # Generate markdown content using the formatter
+        document_title = output_path.stem.replace('_', ' ').replace('-', ' ').title()
+        markdown_content = self.markdown_formatter.format_document(
+            pages=response.pages,
+            image_paths=image_paths,
+            output_dir=output_dir,
+            document_title=document_title,
+        )
         
         # Write markdown file
         with open(output_path, 'w', encoding='utf-8') as f:
             f.write(markdown_content)
         
+        # Extract and log metadata
+        metadata = self.markdown_formatter.extract_metadata(markdown_content)
+        logger.info(
+            f"Generated markdown: {metadata['word_count']} words, "
+            f"{metadata['math_equations']} math equations, "
+            f"{len(metadata['images'])} images, "
+            f"{metadata['tables']} tables"
+        )
+        
         logger.info(f"Successfully converted URL to {output_path}")
         return output_path
-
-    def _generate_markdown(
-        self,
-        response: Dict,
-        image_paths: List[Path],
-        output_dir: Path,
-    ) -> str:
-        """
-        Generate markdown content from OCR response.
-        
-        Args:
-            response: OCR response from Mistral API.
-            image_paths: List of extracted image file paths.
-            output_dir: Output directory for relative path calculation.
-            
-        Returns:
-            Generated markdown content.
-        """
-        markdown_parts = []
-        
-        # Create a mapping of image IDs to relative paths
-        image_map = {}
-        for img_path in image_paths:
-            # Use relative path from output directory
-            rel_path = img_path.relative_to(output_dir)
-            image_map[img_path.name] = str(rel_path)
-        
-        # Process each page
-        for page_idx, page in enumerate(response.pages):
-            if hasattr(page, 'markdown') and page.markdown:
-                page_content = page.markdown
-                
-                # Update image references to use relative paths
-                page_content = self._update_image_references(page_content, image_map)
-                
-                # Add page separator for multi-page documents
-                if page_idx > 0:
-                    markdown_parts.append("\n---\n")
-                
-                markdown_parts.append(page_content)
-        
-        return "\n\n".join(markdown_parts)
-
-    def _update_image_references(self, content: str, image_map: Dict[str, str]) -> str:
-        """
-        Update image references in markdown content.
-        
-        Args:
-            content: Markdown content with image references.
-            image_map: Mapping of image filenames to relative paths.
-            
-        Returns:
-            Updated markdown content with correct image paths.
-        """
-        # Pattern to match markdown image syntax: ![alt](filename)
-        pattern = r'!\[([^\]]*)\]\(([^)]+)\)'
-        
-        def replace_image_ref(match):
-            alt_text = match.group(1)
-            filename = match.group(2)
-            
-            # If we have a mapping for this filename, use the relative path
-            if filename in image_map:
-                return f"![{alt_text}]({image_map[filename]})"
-            else:
-                # Keep original reference
-                return match.group(0)
-        
-        return re.sub(pattern, replace_image_ref, content)
-
-    def _process_math_equations(self, content: str) -> str:
-        """
-        Process and enhance mathematical equations in the content.
-        
-        Args:
-            content: Markdown content that may contain math equations.
-            
-        Returns:
-            Content with processed math equations.
-        """
-        # Mistral OCR should already preserve LaTeX math syntax
-        # This method can be extended to:
-        # 1. Validate math syntax
-        # 2. Convert between different math formats
-        # 3. Add math rendering hints
-        
-        # For now, we'll ensure proper LaTeX delimiters
-        content = self._normalize_math_delimiters(content)
-        
-        return content
-
-    def _normalize_math_delimiters(self, content: str) -> str:
-        """
-        Normalize mathematical equation delimiters.
-        
-        Args:
-            content: Content with potential math equations.
-            
-        Returns:
-            Content with normalized math delimiters.
-        """
-        # Convert various math delimiters to standard LaTeX format
-        
-        # Inline math: $...$ (keep as is, this is standard)
-        # Display math: $$...$$ (keep as is, this is standard)
-        
-        # Convert \(...\) to $...$
-        content = re.sub(r'\\\\?\(([^)]+)\\\\?\)', r'$\1$', content)
-        
-        # Convert \[...\] to $$...$$
-        content = re.sub(r'\\\\?\[([^\]]+)\\\\?\]', r'$$\1$$', content)
-        
-        return content
 
     def get_supported_formats(self) -> List[str]:
         """
