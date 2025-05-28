@@ -12,7 +12,7 @@ class MarkdownFormatter:
 
     def __init__(self, preserve_math: bool = True, base64_images: bool = False):
         """Initialize the markdown formatter.
-        
+
         Args:
             preserve_math: Whether to preserve and enhance mathematical equations.
             base64_images: Whether to embed images as base64 instead of file links.
@@ -28,13 +28,13 @@ class MarkdownFormatter:
         document_title: str | None = None,
     ) -> str:
         """Format a complete document from OCR pages.
-        
+
         Args:
             pages: List of OCR page results from Mistral API.
             image_paths: List of extracted image file paths.
             output_dir: Output directory for relative path calculation.
             document_title: Optional document title to include.
-            
+
         Returns:
             Formatted markdown content.
         """
@@ -76,11 +76,11 @@ class MarkdownFormatter:
 
     def _create_image_map(self, image_paths: list[Path], output_dir: Path) -> dict[str, str]:
         """Create a mapping of image filenames to their appropriate references.
-        
+
         Args:
             image_paths: List of image file paths.
             output_dir: Output directory for relative path calculation.
-            
+
         Returns:
             Dictionary mapping image filenames to markdown references.
         """
@@ -118,11 +118,11 @@ class MarkdownFormatter:
 
     def _update_image_references(self, content: str, image_map: dict[str, str]) -> str:
         """Update image references in markdown content.
-        
+
         Args:
             content: Markdown content with image references.
             image_map: Mapping of image filenames to their references.
-            
+
         Returns:
             Updated markdown content with correct image references.
         """
@@ -150,10 +150,10 @@ class MarkdownFormatter:
 
     def _process_math_equations(self, content: str) -> str:
         """Process and enhance mathematical equations in the content.
-        
+
         Args:
             content: Markdown content that may contain math equations.
-            
+
         Returns:
             Content with processed math equations.
         """
@@ -166,10 +166,10 @@ class MarkdownFormatter:
 
     def _normalize_math_delimiters(self, content: str) -> str:
         """Normalize mathematical equation delimiters to standard LaTeX format.
-        
+
         Args:
             content: Content with potential math equations.
-            
+
         Returns:
             Content with normalized math delimiters.
         """
@@ -190,10 +190,10 @@ class MarkdownFormatter:
 
     def _enhance_math_formatting(self, content: str) -> str:
         """Enhance mathematical formatting for better readability.
-        
+
         Args:
             content: Content with math equations.
-            
+
         Returns:
             Content with enhanced math formatting.
         """
@@ -210,10 +210,10 @@ class MarkdownFormatter:
 
     def _fix_common_math_errors(self, content: str) -> str:
         """Fix common OCR errors in mathematical expressions.
-        
+
         Args:
             content: Content with potential math errors.
-            
+
         Returns:
             Content with corrected math expressions.
         """
@@ -233,10 +233,10 @@ class MarkdownFormatter:
 
     def _clean_markdown_content(self, content: str) -> str:
         """Clean and improve markdown content formatting.
-        
+
         Args:
             content: Raw markdown content.
-            
+
         Returns:
             Cleaned markdown content.
         """
@@ -260,10 +260,10 @@ class MarkdownFormatter:
 
     def _fix_table_formatting(self, content: str) -> str:
         """Fix markdown table formatting.
-        
+
         Args:
             content: Content that may contain tables.
-            
+
         Returns:
             Content with improved table formatting.
         """
@@ -301,10 +301,10 @@ class MarkdownFormatter:
 
     def _apply_final_formatting(self, content: str) -> str:
         """Apply final formatting touches to the markdown content.
-        
+
         Args:
             content: Nearly complete markdown content.
-            
+
         Returns:
             Final formatted markdown content.
         """
@@ -324,10 +324,10 @@ class MarkdownFormatter:
 
     def extract_metadata(self, content: str) -> dict[str, str | int | list[str]]:
         """Extract metadata from markdown content.
-        
+
         Args:
             content: Markdown content to analyze.
-            
+
         Returns:
             Dictionary with extracted metadata.
         """

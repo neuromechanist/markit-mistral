@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class MarkItMistral:
     """
     Main converter class for PDF and image to markdown conversion.
-    
+
     Uses Mistral AI OCR to extract text and preserves mathematical equations
     and images in the output markdown.
     """
@@ -35,7 +35,7 @@ class MarkItMistral:
     ):
         """
         Initialize the MarkItMistral converter.
-        
+
         Args:
             config: Configuration object. If None, creates from environment.
             api_key: Mistral API key. Overrides config if provided.
@@ -86,12 +86,12 @@ class MarkItMistral:
     ) -> Path:
         """
         Convert a PDF or image file to markdown.
-        
+
         Args:
             input_path: Path to the input file (PDF or image).
             output_path: Path for the output markdown file. If None, will be generated.
             output_dir: Directory for output files. If None, uses input file directory.
-            
+
         Returns:
             Path to the generated markdown file.
         """
@@ -106,10 +106,7 @@ class MarkItMistral:
 
         # Determine output paths
         if output_path is None:
-            if output_dir is None:
-                output_dir = input_path.parent
-            else:
-                output_dir = Path(output_dir)
+            output_dir = input_path.parent if output_dir is None else Path(output_dir)
 
             output_path = output_dir / f"{input_path.stem}.md"
         else:
@@ -177,21 +174,18 @@ class MarkItMistral:
     ) -> Path:
         """
         Convert a document from URL to markdown.
-        
+
         Args:
             url: URL to the document (PDF or image).
             output_path: Path for the output markdown file.
             output_dir: Directory for output files. If None, uses output_path directory.
-            
+
         Returns:
             Path to the generated markdown file.
         """
         output_path = Path(output_path)
 
-        if output_dir is None:
-            output_dir = output_path.parent
-        else:
-            output_dir = Path(output_dir)
+        output_dir = output_path.parent if output_dir is None else Path(output_dir)
 
         # Ensure output directory exists
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -242,7 +236,7 @@ class MarkItMistral:
     def get_supported_formats(self) -> list[str]:
         """
         Get list of supported input file formats.
-        
+
         Returns:
             List of supported file extensions.
         """
@@ -251,10 +245,10 @@ class MarkItMistral:
     def validate_input(self, input_path: str | Path) -> bool:
         """
         Validate if the input file is supported.
-        
+
         Args:
             input_path: Path to the input file.
-            
+
         Returns:
             True if the file is supported, False otherwise.
         """
@@ -268,10 +262,10 @@ class MarkItMistral:
     def get_file_info(self, input_path: str | Path) -> dict[str, str | int | float]:
         """
         Get information about the input file.
-        
+
         Args:
             input_path: Path to the input file.
-            
+
         Returns:
             Dictionary with file information.
         """

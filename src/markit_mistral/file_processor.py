@@ -175,7 +175,7 @@ class FileProcessorManager:
         # Add image extensions
         extensions.update(ImageProcessor.SUPPORTED_FORMATS)
 
-        return sorted(list(extensions))
+        return sorted(extensions)
 
     def detect_file_type(self, file_path: Path) -> str:
         """Detect the type of file."""

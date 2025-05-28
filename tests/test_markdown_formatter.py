@@ -104,7 +104,7 @@ class TestMarkdownFormatter:
         formatter = MarkdownFormatter()
 
         content = """# Title
-        
+
 This is a paragraph with $E = mc^2$ inline math.
 
 $$F = ma$$

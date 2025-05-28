@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 class OCRProcessor:
     """
     OCR processor using Mistral AI API.
-    
+
     Handles image preprocessing, API communication, and result processing
     for optimal text extraction with math equation preservation.
     """
@@ -35,7 +35,7 @@ class OCRProcessor:
     ):
         """
         Initialize the OCR processor.
-        
+
         Args:
             api_key: Mistral API key. If None, will try to get from environment.
             max_retries: Maximum number of retries for API calls.
@@ -57,10 +57,10 @@ class OCRProcessor:
 
     def _encode_image_to_data_uri(self, image_path: str | Path) -> str:
         """Encode an image file to a data URI.
-        
+
         Args:
             image_path: Path to the image file.
-            
+
         Returns:
             Data URI string for the image.
         """
@@ -80,10 +80,10 @@ class OCRProcessor:
 
     def _encode_pdf_to_data_uri(self, pdf_path: str | Path) -> str:
         """Encode a PDF file to a data URI.
-        
+
         Args:
             pdf_path: Path to the PDF file.
-            
+
         Returns:
             Data URI string for the PDF.
         """
@@ -102,11 +102,11 @@ class OCRProcessor:
 
     def _process_with_retry(self, document_config: dict, include_images: bool = True) -> dict:
         """Process document with retry logic.
-        
+
         Args:
             document_config: Document configuration for the API.
             include_images: Whether to include images in the response.
-            
+
         Returns:
             OCR response from Mistral API.
         """
@@ -145,11 +145,11 @@ class OCRProcessor:
 
     def process_pdf(self, pdf_path: str | Path, include_images: bool = True) -> dict:
         """Process a PDF file using Mistral OCR.
-        
+
         Args:
             pdf_path: Path to the PDF file.
             include_images: Whether to include extracted images in the response.
-            
+
         Returns:
             OCR response containing pages with markdown text and images.
         """
@@ -183,11 +183,11 @@ class OCRProcessor:
 
     def process_image(self, image_path: str | Path, include_images: bool = True) -> dict:
         """Process an image file using Mistral OCR.
-        
+
         Args:
             image_path: Path to the image file.
             include_images: Whether to include the processed image in the response.
-            
+
         Returns:
             OCR response containing the extracted text and image data.
         """
@@ -224,11 +224,11 @@ class OCRProcessor:
 
     def process_url(self, url: str, include_images: bool = True) -> dict:
         """Process a document from a URL using Mistral OCR.
-        
+
         Args:
             url: URL to the document (PDF or image).
             include_images: Whether to include extracted images in the response.
-            
+
         Returns:
             OCR response containing pages with markdown text and images.
         """
@@ -258,10 +258,10 @@ class OCRProcessor:
 
     def extract_text(self, response: dict) -> str:
         """Extract plain text from OCR response.
-        
+
         Args:
             response: OCR response from Mistral API.
-            
+
         Returns:
             Concatenated text from all pages.
         """
@@ -275,11 +275,11 @@ class OCRProcessor:
 
     def extract_images(self, response: dict, output_dir: str | Path) -> list[Path]:
         """Extract and save images from OCR response.
-        
+
         Args:
             response: OCR response from Mistral API.
             output_dir: Directory to save extracted images.
-            
+
         Returns:
             List of paths to saved image files.
         """
@@ -322,10 +322,10 @@ class OCRProcessor:
 
     def get_page_count(self, response: dict) -> int:
         """Get the number of pages in the OCR response.
-        
+
         Args:
             response: OCR response from Mistral API.
-            
+
         Returns:
             Number of pages processed.
         """
@@ -333,11 +333,11 @@ class OCRProcessor:
 
     def get_page_text(self, response: dict, page_index: int) -> str:
         """Get text from a specific page.
-        
+
         Args:
             response: OCR response from Mistral API.
             page_index: Zero-based page index.
-            
+
         Returns:
             Markdown text from the specified page.
         """
