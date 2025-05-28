@@ -14,6 +14,7 @@ class MarkItWebUI {
         this.initializeElements();
         this.bindEvents();
         this.loadStoredApiKey();
+        this.loadDebugMode();
     }
 
     initializeElements() {
@@ -29,6 +30,7 @@ class MarkItWebUI {
         this.apiKeyInput = document.getElementById('api-key');
         this.includeImagesCheckbox = document.getElementById('include-images');
         this.base64ImagesCheckbox = document.getElementById('base64-images');
+        this.debugModeCheckbox = document.getElementById('debug-mode');
 
         // Control elements
         this.processBtn = document.getElementById('process-btn');
@@ -65,6 +67,7 @@ class MarkItWebUI {
         // Configuration events
         this.apiKeyInput.addEventListener('input', this.handleApiKeyChange.bind(this));
         this.includeImagesCheckbox.addEventListener('change', this.updateProcessButton.bind(this));
+        this.debugModeCheckbox.addEventListener('change', this.handleDebugModeChange.bind(this));
 
         // Control events
         this.processBtn.addEventListener('click', this.processFile.bind(this));
@@ -81,6 +84,14 @@ class MarkItWebUI {
             this.apiKeyInput.value = storedKey;
             this.apiKey = storedKey;
             this.updateProcessButton();
+        }
+    }
+
+    loadDebugMode() {
+        const storedDebugMode = localStorage.getItem('debug-mode');
+        if (storedDebugMode === 'true') {
+            this.debugModeCheckbox.checked = true;
+            console.log('Debug mode enabled from localStorage');
         }
     }
 
@@ -177,9 +188,33 @@ class MarkItWebUI {
         this.processBtn.disabled = !canProcess;
     }
 
+    handleDebugModeChange(e) {
+        const isDebugMode = e.target.checked;
+        console.log(`Debug mode ${isDebugMode ? 'enabled' : 'disabled'}`);
+        
+        // Store debug preference
+        localStorage.setItem('debug-mode', isDebugMode.toString());
+        
+        // Update PyScript debug mode if available
+        if (window.pyScriptSetDebugMode) {
+            window.pyScriptSetDebugMode(isDebugMode);
+        }
+    }
+
     async processFile() {
         if (!this.selectedFile || !this.apiKey || this.isProcessing) {
             return;
+        }
+
+        const debugMode = this.debugModeCheckbox.checked;
+        
+        if (debugMode) {
+            console.log('Starting file processing with debug mode enabled');
+            console.log('File details:', {
+                name: this.selectedFile.name,
+                type: this.selectedFile.type,
+                size: this.selectedFile.size
+            });
         }
 
         this.isProcessing = true;
@@ -195,6 +230,10 @@ class MarkItWebUI {
             // Convert file to base64
             const fileBase64 = await this.fileToBase64(this.selectedFile);
             this.updateProgress('Preparing API request...', 20);
+            
+            if (debugMode) {
+                console.log('File converted to base64, length:', fileBase64.length);
+            }
 
             // Get processing options
             const includeImages = this.includeImagesCheckbox.checked;
@@ -202,6 +241,14 @@ class MarkItWebUI {
 
             // Call PyScript function to process the file
             this.updateProgress('Processing with Mistral AI...', 30);
+            
+            if (debugMode) {
+                console.log('Calling PyScript processor with options:', {
+                    includeImages,
+                    base64Images,
+                    apiKeyLength: this.apiKey.length
+                });
+            }
             
             // Use PyScript to process the file
             const result = await this.callPyScriptProcessor({
@@ -213,6 +260,10 @@ class MarkItWebUI {
                 base64_images: base64Images
             });
 
+            if (debugMode) {
+                console.log('PyScript processor result:', result);
+            }
+
             this.updateProgress('Processing results...', 90);
 
             if (result.success) {
@@ -221,12 +272,28 @@ class MarkItWebUI {
                 this.showResults();
                 this.updateProgress('Complete!', 100);
                 setTimeout(() => this.hideProgress(), 2000);
+                
+                if (debugMode) {
+                    console.log('Processing completed successfully:', {
+                        markdownLength: this.markdownContent.length,
+                        imageCount: this.extractedImages.length
+                    });
+                }
             } else {
                 throw new Error(result.error || 'Processing failed');
             }
 
         } catch (error) {
             console.error('Processing error:', error);
+            
+            if (debugMode) {
+                console.error('Detailed error information:', {
+                    message: error.message,
+                    stack: error.stack,
+                    name: error.name
+                });
+            }
+            
             this.showError(error.message || 'An error occurred while processing the file.');
             this.hideProgress();
         } finally {
@@ -245,14 +312,39 @@ class MarkItWebUI {
     }
 
     async callPyScriptProcessor(data) {
-        // This will be called from PyScript
-        return new Promise((resolve) => {
-            window.pyScriptProcessFile = resolve;
+        // Enhanced PyScript communication with timeout and better error handling
+        return new Promise((resolve, reject) => {
+            const debugMode = this.debugModeCheckbox.checked;
+            
+            // Set up a timeout to catch stuck requests
+            const timeout = setTimeout(() => {
+                if (debugMode) {
+                    console.error('PyScript processing timed out after 2 minutes');
+                }
+                reject(new Error('Processing timed out. This may be due to a large file, network issues, or PyScript errors. Check the browser console for details.'));
+            }, 120000); // 2 minute timeout
+
+            window.pyScriptProcessFile = (result) => {
+                clearTimeout(timeout);
+                if (debugMode) {
+                    console.log('PyScript callback received:', result);
+                }
+                resolve(result);
+            };
+            
             window.pyScriptData = data;
+            
+            if (debugMode) {
+                console.log('Dispatching processFile event to PyScript');
+            }
             
             // Trigger PyScript processing
             const event = new CustomEvent('processFile', { detail: data });
             document.dispatchEvent(event);
+            
+            if (debugMode) {
+                console.log('processFile event dispatched');
+            }
         });
     }
 
