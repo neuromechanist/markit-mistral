@@ -5,6 +5,7 @@
 
 class MarkItWebUI {
     constructor() {
+        console.log('🔧 MarkItWebUI: Constructor starting...');
         this.selectedFile = null;
         this.apiKey = null;
         this.isProcessing = false;
@@ -15,6 +16,7 @@ class MarkItWebUI {
         this.bindEvents();
         this.loadStoredApiKey();
         this.loadDebugMode();
+        console.log('✅ MarkItWebUI: Constructor completed');
     }
 
     initializeElements() {
@@ -88,10 +90,13 @@ class MarkItWebUI {
     }
 
     loadDebugMode() {
+        console.log('🔧 Loading debug mode preference...');
         const storedDebugMode = localStorage.getItem('debug-mode');
         if (storedDebugMode === 'true') {
             this.debugModeCheckbox.checked = true;
-            console.log('Debug mode enabled from localStorage');
+            console.log('✅ Debug mode enabled from localStorage');
+        } else {
+            console.log('📝 Debug mode disabled (default)');
         }
     }
 
@@ -190,14 +195,22 @@ class MarkItWebUI {
 
     handleDebugModeChange(e) {
         const isDebugMode = e.target.checked;
-        console.log(`Debug mode ${isDebugMode ? 'enabled' : 'disabled'}`);
+        console.log(`🔧 Debug mode ${isDebugMode ? 'enabled' : 'disabled'}`);
         
         // Store debug preference
         localStorage.setItem('debug-mode', isDebugMode.toString());
         
         // Update PyScript debug mode if available
         if (window.pyScriptSetDebugMode) {
+            console.log('🔗 Updating PyScript debug mode...');
             window.pyScriptSetDebugMode(isDebugMode);
+        } else {
+            console.log('⚠️ PyScript debug function not found');
+        }
+        
+        // Immediate test
+        if (isDebugMode) {
+            console.log('🧪 Debug mode test: This message should appear when debug is enabled');
         }
     }
 
@@ -472,17 +485,21 @@ class MarkItWebUI {
 
 // Initialize the UI when the page loads
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('🚀 JavaScript: DOM loaded, initializing MarkIt UI...');
     window.markitUI = new MarkItWebUI();
+    console.log('✅ JavaScript: MarkIt UI initialized');
 });
 
 // Utility functions for PyScript integration
 window.updateProgress = (text, percent) => {
+    console.log(`📊 Progress: ${text} (${percent}%)`);
     if (window.markitUI) {
         window.markitUI.updateProgress(text, percent);
     }
 };
 
 window.showError = (message) => {
+    console.error(`❌ Error: ${message}`);
     if (window.markitUI) {
         window.markitUI.showError(message);
     }

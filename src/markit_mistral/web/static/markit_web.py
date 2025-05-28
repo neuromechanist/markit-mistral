@@ -382,12 +382,19 @@ def set_debug_mode(enabled: bool):
 js.pyScriptSetDebugMode = set_debug_mode
 
 # Log that PyScript is ready
-logger.info("MarkIt Mistral PyScript backend initialized")
 debug_log("PyScript backend initialization complete")
 
 # Update UI to show PyScript is ready
-if hasattr(js, "console"):
-    js.console.log("MarkIt Mistral PyScript backend ready")
-    js.console.log(
-        "To enable debug mode, check the 'Debug mode' checkbox in the interface"
-    )
+js.console.log("✅ MarkIt Mistral PyScript backend ready")
+js.console.log("📝 To enable debug mode, check the 'Debug mode' checkbox in the interface")
+js.console.log("🔧 Open browser console (F12) to see debug messages")
+
+# Test that JavaScript communication works
+try:
+    js.console.log("🔗 Testing JavaScript communication...")
+    if hasattr(js, 'document'):
+        debug_log("JavaScript document object available")
+    if hasattr(js, 'window'):
+        debug_log("JavaScript window object available")
+except Exception as e:
+    js.console.error(f"JavaScript communication test failed: {e}")
