@@ -107,7 +107,7 @@ class OutputManager:
                 'date': datetime.now().strftime("%Y%m%d"),
                 'time': datetime.now().strftime("%H%M%S"),
             }
-            
+
             try:
                 filename = self.custom_naming.format(**name_vars)
             except KeyError as e:
@@ -158,7 +158,7 @@ class OutputManager:
         try:
             with open(metadata_path, 'w', encoding='utf-8') as f:
                 json.dump(metadata, f, indent=2, ensure_ascii=False)
-            
+
             logger.debug(f"Saved metadata to {metadata_path}")
         except Exception as e:
             logger.warning(f"Failed to save metadata: {e}")
@@ -287,7 +287,7 @@ class OutputManager:
                     # Count images in directory
                     image_files = [f for f in path.iterdir() if f.is_file()]
                     summary['images_count'] = len(image_files)
-                    
+
                     for img_file in image_files:
                         size = img_file.stat().st_size
                         summary['files_created'].append({
@@ -297,4 +297,4 @@ class OutputManager:
                         })
                         summary['total_size_bytes'] += size
 
-        return summary 
+        return summary

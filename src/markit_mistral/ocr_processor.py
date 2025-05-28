@@ -12,20 +12,16 @@ import os
 import time
 from pathlib import Path
 
-from mistralai import Mistral
-from mistralai import SDKError
+from mistralai import Mistral, SDKError
 
 from .exceptions import (
     APIError,
     APIKeyError,
     APIQuotaError,
-    APIRateLimitError,
     FileCorruptedError,
     FileNotFoundError,
     FileTooLargeError,
-    NetworkError,
     OCRProcessingError,
-    OCRTimeoutError,
     handle_api_error,
 )
 
@@ -64,7 +60,7 @@ class OCRProcessor:
             self.client = Mistral(api_key=self.api_key)
         except Exception as e:
             raise APIError(f"Failed to initialize Mistral client: {e}")
-            
+
         self.max_retries = max_retries
         self.retry_delay = retry_delay
         self.max_file_size_mb = max_file_size_mb
@@ -191,14 +187,14 @@ class OCRProcessor:
         logger.info(f"Processing PDF: {pdf_path}")
 
         pdf_path = Path(pdf_path)
-        
+
         try:
             file_size = pdf_path.stat().st_size
         except FileNotFoundError:
             raise FileNotFoundError(f"PDF file not found: {pdf_path}")
         except Exception as e:
             raise FileCorruptedError(str(pdf_path), f"Cannot access file: {e}")
-            
+
         file_size_mb = file_size / (1024 * 1024)
         logger.debug(f"PDF file size: {file_size_mb:.2f} MB")
 
@@ -341,12 +337,12 @@ class OCRProcessor:
                         break
             if has_images:
                 break
-        
+
         # Only create directory if we have images to save
         if not has_images:
             logger.debug("No images found in OCR response")
             return saved_images
-        
+
         # Create output directory only when needed
         output_dir.mkdir(parents=True, exist_ok=True)
 

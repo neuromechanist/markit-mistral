@@ -22,14 +22,14 @@ class TestCLIParser:
     def test_version_argument(self):
         """Test version argument."""
         parser = create_parser()
-        
+
         with pytest.raises(SystemExit):
             parser.parse_args(["--version"])
 
     def test_help_argument(self):
         """Test help argument."""
         parser = create_parser()
-        
+
         with pytest.raises(SystemExit):
             parser.parse_args(["--help"])
 
@@ -37,7 +37,7 @@ class TestCLIParser:
         """Test basic argument parsing."""
         parser = create_parser()
         args = parser.parse_args(["input.pdf"])
-        
+
         assert args.input == "input.pdf"
         assert args.output is None
         assert args.verbose is False
@@ -47,22 +47,22 @@ class TestCLIParser:
         """Test output argument."""
         parser = create_parser()
         args = parser.parse_args(["input.pdf", "-o", "output.md"])
-        
+
         assert args.input == "input.pdf"
         assert args.output == "output.md"
 
     def test_image_arguments(self):
         """Test image-related arguments."""
         parser = create_parser()
-        
+
         # Test extract images
         args = parser.parse_args(["input.pdf", "--extract-images"])
         assert args.extract_images is True
-        
+
         # Test no images
         args = parser.parse_args(["input.pdf", "--no-images"])
         assert args.no_images is True
-        
+
         # Test base64 images
         args = parser.parse_args(["input.pdf", "--base64-images"])
         assert args.base64_images is True
@@ -70,15 +70,15 @@ class TestCLIParser:
     def test_output_management_arguments(self):
         """Test output management arguments."""
         parser = create_parser()
-        
+
         # Test metadata arguments
         args = parser.parse_args(["input.pdf", "--no-metadata"])
         assert args.no_metadata is True
-        
+
         # Test archive creation
         args = parser.parse_args(["input.pdf", "--create-archive"])
         assert args.create_archive is True
-        
+
         # Test output format
         args = parser.parse_args(["input.pdf", "--output-format", "json"])
         assert args.output_format == "json"
@@ -86,11 +86,11 @@ class TestCLIParser:
     def test_verbose_quiet_arguments(self):
         """Test verbose and quiet arguments."""
         parser = create_parser()
-        
+
         # Test verbose
         args = parser.parse_args(["input.pdf", "--verbose"])
         assert args.verbose is True
-        
+
         # Test quiet
         args = parser.parse_args(["input.pdf", "--quiet"])
         assert args.quiet is True
@@ -99,21 +99,21 @@ class TestCLIParser:
         """Test API key argument."""
         parser = create_parser()
         args = parser.parse_args(["input.pdf", "--api-key", "test-key"])
-        
+
         assert args.api_key == "test-key"
 
     def test_progress_argument(self):
         """Test progress argument."""
         parser = create_parser()
         args = parser.parse_args(["input.pdf", "--progress"])
-        
+
         assert args.progress is True
 
     def test_batch_argument(self):
         """Test batch argument."""
         parser = create_parser()
         args = parser.parse_args(["input.pdf", "--batch"])
-        
+
         assert args.batch is True
 
 
@@ -127,20 +127,20 @@ class TestCLIMain:
         # Setup mocks
         mock_config = Mock()
         mock_config_class.from_env.return_value = mock_config
-        
+
         mock_converter = Mock()
         mock_converter_class.return_value = mock_converter
         mock_converter.file_processor.is_supported.return_value = True
         mock_converter.convert_file.return_value = Path("output.md")
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
             input_file = temp_path / "test.pdf"
             input_file.touch()  # Create empty file
-            
+
             with patch('sys.argv', ['markit-mistral', str(input_file)]):
                 result = main()
-                
+
                 assert result == 0
                 mock_converter.convert_file.assert_called_once()
 
@@ -150,10 +150,10 @@ class TestCLIMain:
         """Test main function with non-existent file."""
         mock_config = Mock()
         mock_config_class.from_env.return_value = mock_config
-        
+
         with patch('sys.argv', ['markit-mistral', 'nonexistent.pdf']):
             result = main()
-            
+
             assert result == 1
 
     @patch('markit_mistral.cli.MarkItMistral')
@@ -162,20 +162,20 @@ class TestCLIMain:
         """Test main function with unsupported file type."""
         mock_config = Mock()
         mock_config_class.from_env.return_value = mock_config
-        
+
         mock_converter = Mock()
         mock_converter_class.return_value = mock_converter
         mock_converter.file_processor.is_supported.return_value = False
         mock_converter.file_processor.get_supported_extensions.return_value = ['.pdf', '.png']
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
             input_file = temp_path / "test.txt"
             input_file.touch()
-            
+
             with patch('sys.argv', ['markit-mistral', str(input_file)]):
                 result = main()
-                
+
                 assert result == 1
 
     @patch('markit_mistral.cli.MarkItMistral')
@@ -186,10 +186,10 @@ class TestCLIMain:
         mock_stdin.isatty.return_value = True
         mock_config = Mock()
         mock_config_class.from_env.return_value = mock_config
-        
+
         with patch('sys.argv', ['markit-mistral']):
             result = main()
-            
+
             assert result == 1
 
     @patch('markit_mistral.cli.MarkItMistral')
@@ -201,10 +201,10 @@ class TestCLIMain:
         mock_stdin.buffer.read.return_value = b''
         mock_config = Mock()
         mock_config_class.from_env.return_value = mock_config
-        
+
         with patch('sys.argv', ['markit-mistral']):
             result = main()
-            
+
             assert result == 1
 
     @patch('markit_mistral.cli.MarkItMistral')
@@ -213,20 +213,20 @@ class TestCLIMain:
         """Test main function with verbose flag."""
         mock_config = Mock()
         mock_config_class.from_env.return_value = mock_config
-        
+
         mock_converter = Mock()
         mock_converter_class.return_value = mock_converter
         mock_converter.file_processor.is_supported.return_value = True
         mock_converter.convert_file.return_value = Path("output.md")
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
             input_file = temp_path / "test.pdf"
             input_file.touch()
-            
+
             with patch('sys.argv', ['markit-mistral', str(input_file), '--verbose']):
                 result = main()
-                
+
                 assert result == 0
                 assert mock_config.log_level == "DEBUG"
 
@@ -236,20 +236,20 @@ class TestCLIMain:
         """Test main function with quiet flag."""
         mock_config = Mock()
         mock_config_class.from_env.return_value = mock_config
-        
+
         mock_converter = Mock()
         mock_converter_class.return_value = mock_converter
         mock_converter.file_processor.is_supported.return_value = True
         mock_converter.convert_file.return_value = Path("output.md")
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
             input_file = temp_path / "test.pdf"
             input_file.touch()
-            
+
             with patch('sys.argv', ['markit-mistral', str(input_file), '--quiet']):
                 result = main()
-                
+
                 assert result == 0
                 assert mock_config.log_level == "ERROR"
 
@@ -259,20 +259,20 @@ class TestCLIMain:
         """Test main function with no-images flag."""
         mock_config = Mock()
         mock_config_class.from_env.return_value = mock_config
-        
+
         mock_converter = Mock()
         mock_converter_class.return_value = mock_converter
         mock_converter.file_processor.is_supported.return_value = True
         mock_converter.convert_file.return_value = Path("output.md")
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
             input_file = temp_path / "test.pdf"
             input_file.touch()
-            
+
             with patch('sys.argv', ['markit-mistral', str(input_file), '--no-images']):
                 result = main()
-                
+
                 assert result == 0
                 assert mock_config.include_images is False
 
@@ -282,21 +282,21 @@ class TestCLIMain:
         """Test main function with output management flags."""
         mock_config = Mock()
         mock_config_class.from_env.return_value = mock_config
-        
+
         mock_converter = Mock()
         mock_converter.output_manager = Mock()
         mock_converter_class.return_value = mock_converter
         mock_converter.file_processor.is_supported.return_value = True
         mock_converter.convert_file.return_value = Path("output.md")
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
             input_file = temp_path / "test.pdf"
             input_file.touch()
-            
+
             with patch('sys.argv', ['markit-mistral', str(input_file), '--no-metadata', '--create-archive']):
                 result = main()
-                
+
                 assert result == 0
                 assert mock_converter.output_manager.preserve_metadata is False
                 assert mock_converter.output_manager.create_zip_archive is True
@@ -307,20 +307,20 @@ class TestCLIMain:
         """Test main function exception handling."""
         mock_config = Mock()
         mock_config_class.from_env.return_value = mock_config
-        
+
         mock_converter = Mock()
         mock_converter_class.return_value = mock_converter
         mock_converter.file_processor.is_supported.return_value = True
         mock_converter.convert_file.side_effect = Exception("Test error")
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
             input_file = temp_path / "test.pdf"
             input_file.touch()
-            
+
             with patch('sys.argv', ['markit-mistral', str(input_file)]):
                 result = main()
-                
+
                 assert result == 1
 
     @patch('markit_mistral.cli.MarkItMistral')
@@ -329,20 +329,20 @@ class TestCLIMain:
         """Test main function exception handling with verbose output."""
         mock_config = Mock()
         mock_config_class.from_env.return_value = mock_config
-        
+
         mock_converter = Mock()
         mock_converter_class.return_value = mock_converter
         mock_converter.file_processor.is_supported.return_value = True
         mock_converter.convert_file.side_effect = Exception("Test error")
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
             input_file = temp_path / "test.pdf"
             input_file.touch()
-            
+
             with patch('sys.argv', ['markit-mistral', str(input_file), '--verbose']):
                 with patch('traceback.print_exc') as mock_traceback:
                     result = main()
-                    
+
                     assert result == 1
                     mock_traceback.assert_called_once()

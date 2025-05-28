@@ -9,7 +9,7 @@ import logging
 from pathlib import Path
 
 from .config import Config
-from .file_processor import create_file_processor, FileProcessorManager
+from .file_processor import create_file_processor
 from .markdown_formatter import MarkdownFormatter
 from .ocr_processor import OCRProcessor
 from .output_manager import OutputManager

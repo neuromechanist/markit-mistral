@@ -8,7 +8,7 @@ and user-friendly error messages.
 
 class MarkItMistralError(Exception):
     """Base exception class for markit-mistral."""
-    
+
     def __init__(self, message: str, details: str | None = None):
         """
         Initialize the exception.
@@ -20,7 +20,7 @@ class MarkItMistralError(Exception):
         super().__init__(message)
         self.message = message
         self.details = details
-    
+
     def __str__(self) -> str:
         """Return a formatted error message."""
         if self.details:
@@ -35,7 +35,7 @@ class ConfigurationError(MarkItMistralError):
 
 class APIError(MarkItMistralError):
     """Raised when there's an API-related error."""
-    
+
     def __init__(self, message: str, status_code: int | None = None, details: str | None = None):
         """
         Initialize the API error.
@@ -51,7 +51,7 @@ class APIError(MarkItMistralError):
 
 class APIKeyError(APIError):
     """Raised when there's an API key issue."""
-    
+
     def __init__(self, message: str = "Invalid or missing API key"):
         super().__init__(
             message,
@@ -61,7 +61,7 @@ class APIKeyError(APIError):
 
 class APIQuotaError(APIError):
     """Raised when API quota is exceeded."""
-    
+
     def __init__(self, message: str = "API quota exceeded"):
         super().__init__(
             message,
@@ -71,7 +71,7 @@ class APIQuotaError(APIError):
 
 class APIRateLimitError(APIError):
     """Raised when API rate limit is hit."""
-    
+
     def __init__(self, message: str = "API rate limit exceeded", retry_after: int | None = None):
         details = "Please wait before making more requests"
         if retry_after:
@@ -87,7 +87,7 @@ class FileProcessingError(MarkItMistralError):
 
 class UnsupportedFileTypeError(FileProcessingError):
     """Raised when trying to process an unsupported file type."""
-    
+
     def __init__(self, file_path: str, supported_formats: list[str] | None = None):
         message = f"Unsupported file type: {file_path}"
         details = None
@@ -103,7 +103,7 @@ class FileNotFoundError(FileProcessingError):
 
 class FileCorruptedError(FileProcessingError):
     """Raised when a file appears to be corrupted."""
-    
+
     def __init__(self, file_path: str, reason: str | None = None):
         message = f"File appears to be corrupted: {file_path}"
         details = reason if reason else "Unable to read or parse the file"
@@ -112,7 +112,7 @@ class FileCorruptedError(FileProcessingError):
 
 class FileTooLargeError(FileProcessingError):
     """Raised when a file exceeds size limits."""
-    
+
     def __init__(self, file_path: str, size_mb: float, max_size_mb: float):
         message = f"File too large: {file_path} ({size_mb:.1f} MB)"
         details = f"Maximum allowed size: {max_size_mb} MB"
@@ -126,7 +126,7 @@ class OCRProcessingError(MarkItMistralError):
 
 class OCRTimeoutError(OCRProcessingError):
     """Raised when OCR processing times out."""
-    
+
     def __init__(self, timeout_seconds: int):
         message = f"OCR processing timed out after {timeout_seconds} seconds"
         details = "Try processing a smaller file or increase the timeout limit"
@@ -150,7 +150,7 @@ class OutputError(MarkItMistralError):
 
 class PermissionError(OutputError):
     """Raised when there are insufficient permissions."""
-    
+
     def __init__(self, path: str, operation: str = "write"):
         message = f"Permission denied: cannot {operation} to {path}"
         details = "Check file/directory permissions and try again"
@@ -159,7 +159,7 @@ class PermissionError(OutputError):
 
 class DiskSpaceError(OutputError):
     """Raised when there's insufficient disk space."""
-    
+
     def __init__(self, path: str, required_mb: float | None = None):
         message = f"Insufficient disk space: {path}"
         details = None
@@ -175,7 +175,7 @@ class ValidationError(MarkItMistralError):
 
 class NetworkError(MarkItMistralError):
     """Raised when there's a network-related error."""
-    
+
     def __init__(self, message: str = "Network error occurred"):
         details = "Check your internet connection and try again"
         super().__init__(message, details)
@@ -192,7 +192,7 @@ def handle_api_error(error: Exception) -> APIError:
         Appropriate APIError subclass.
     """
     error_message = str(error).lower()
-    
+
     if "api key" in error_message or "unauthorized" in error_message:
         return APIKeyError()
     elif "quota" in error_message or "limit exceeded" in error_message:
@@ -220,7 +220,7 @@ def handle_file_error(error: Exception, file_path: str) -> FileProcessingError:
         Appropriate FileProcessingError subclass.
     """
     error_message = str(error).lower()
-    
+
     if "not found" in error_message or "no such file" in error_message:
         return FileNotFoundError(f"File not found: {file_path}")
     elif "permission" in error_message or "access" in error_message:
@@ -246,11 +246,11 @@ def get_user_friendly_message(error: Exception) -> str:
     """
     if isinstance(error, MarkItMistralError):
         return str(error)
-    
+
     # Handle common Python exceptions
     error_type = type(error).__name__
     error_message = str(error)
-    
+
     if error_type == "FileNotFoundError":
         return f"File not found: {error_message}"
     elif error_type == "PermissionError":
@@ -262,4 +262,4 @@ def get_user_friendly_message(error: Exception) -> str:
     elif error_type == "MemoryError":
         return "Insufficient memory. Try processing a smaller file."
     else:
-        return f"An unexpected error occurred: {error_message}" 
+        return f"An unexpected error occurred: {error_message}"

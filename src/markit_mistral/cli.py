@@ -11,7 +11,7 @@ from pathlib import Path
 from . import __description__, __version__
 from .config import Config
 from .converter import MarkItMistral
-from .exceptions import get_user_friendly_message, MarkItMistralError
+from .exceptions import MarkItMistralError, get_user_friendly_message
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -154,14 +154,14 @@ def main() -> int:
         # Override config with command line arguments
         if args.api_key:
             config.mistral_api_key = args.api_key
-        
+
         # Handle image extraction options (--no-images overrides --extract-images)
         if args.no_images:
             config.include_images = False
         elif args.extract_images:
             config.include_images = True
         # Default: include_images is True unless explicitly disabled
-        
+
         if args.base64_images:
             config.base64_images = True
         if hasattr(args, 'preserve_math') and args.preserve_math is not None:
@@ -227,20 +227,20 @@ def main() -> int:
                 print("Error: No input file provided and stdin is a TTY", file=sys.stderr)
                 print("Use: markit-mistral <file> or pipe content to stdin", file=sys.stderr)
                 return 1
-            
+
             # Read binary data from stdin
             import tempfile
             input_data = sys.stdin.buffer.read()
-            
+
             if not input_data:
                 print("Error: No data received from stdin", file=sys.stderr)
                 return 1
-            
+
             # Create temporary file
             with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
                 temp_file.write(input_data)
                 temp_input_path = Path(temp_file.name)
-            
+
             try:
                 # Validate file type
                 if not converter.file_processor.is_supported(temp_input_path):
@@ -248,7 +248,7 @@ def main() -> int:
                     supported = ", ".join(converter.file_processor.get_supported_extensions())
                     print(f"Supported formats: {supported}", file=sys.stderr)
                     return 1
-                
+
                 # Convert file
                 if args.output:
                     output_path = Path(args.output)
@@ -260,11 +260,11 @@ def main() -> int:
                     result_path = converter.convert_file(temp_input_path)
                     with open(result_path, encoding='utf-8') as f:
                         print(f.read(), end='')
-                    
+
                     # Clean up temporary result file
                     if result_path.parent == config.get_temp_dir():
                         result_path.unlink()
-            
+
             finally:
                 # Clean up temporary input file
                 temp_input_path.unlink(missing_ok=True)
