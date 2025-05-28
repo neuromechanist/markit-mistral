@@ -10,8 +10,32 @@ A powerful PDF and image to markdown converter using Mistral AI OCR with advance
 - Extract and manage images alongside markdown output
 - Support for complex documents with tables, figures, and formulas
 - Command-line interface similar to markitdown
+- **Web interface for browser-based processing**
 - Batch processing capabilities
 - Configurable output formats
+
+## Usage Options
+
+### Web Interface (Browser-based)
+
+For a user-friendly, browser-based experience:
+
+1. Open `src/markit_mistral/web/index.html` in your browser
+2. Enter your Mistral API key
+3. Drag and drop files or click to upload
+4. Download the generated markdown and images
+
+**Features:**
+- No installation required - runs entirely in your browser
+- Privacy-focused - files never leave your device
+- Real-time progress tracking
+- Responsive design for mobile and desktop
+
+See the [Web Interface README](src/markit_mistral/web/README.md) for detailed instructions.
+
+### Command Line Interface
+
+For automated workflows and integration:
 
 ## Installation
 
