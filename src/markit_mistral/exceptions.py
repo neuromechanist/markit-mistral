@@ -208,30 +208,27 @@ def handle_api_error(error: Exception) -> APIError:
         return APIError(f"API request failed: {error}")
 
 
-def handle_file_error(error: Exception, file_path: str) -> FileProcessingError:
-    """
-    Convert various file errors to appropriate custom exceptions.
+def handle_file_error(error: Exception) -> str:
+    """Convert a file operation error to a user-friendly message.
 
     Args:
-        error: The original exception.
-        file_path: Path to the file that caused the error.
+        error: The exception that occurred
 
     Returns:
-        Appropriate FileProcessingError subclass.
+        A user-friendly error message
     """
-    error_message = str(error).lower()
+    error_type = type(error).__name__
+    error_message = str(error)
 
-    if "not found" in error_message or "no such file" in error_message:
-        return FileNotFoundError(f"File not found: {file_path}")
-    elif "permission" in error_message or "access" in error_message:
-        return PermissionError(file_path, "read")
-    elif "corrupted" in error_message or "invalid" in error_message:
-        return FileCorruptedError(file_path, str(error))
-    elif "too large" in error_message or "size" in error_message:
-        # Try to extract size information if available
-        return FileTooLargeError(file_path, 0, 0)  # Will be updated by caller
-    else:
-        return FileProcessingError(f"File processing failed: {file_path}", str(error))
+    error_messages = {
+        "FileNotFoundError": f"File not found: {error_message}",
+        "PermissionError": f"Permission denied: {error_message}",
+        "ConnectionError": "Network connection error. Please check your internet connection.",
+        "TimeoutError": "Operation timed out. Please try again.",
+        "MemoryError": "Insufficient memory. Try processing a smaller file.",
+    }
+
+    return error_messages.get(error_type, f"An unexpected error occurred: {error_message}")
 
 
 def get_user_friendly_message(error: Exception) -> str:
@@ -251,15 +248,12 @@ def get_user_friendly_message(error: Exception) -> str:
     error_type = type(error).__name__
     error_message = str(error)
 
-    if error_type == "FileNotFoundError":
-        return f"File not found: {error_message}"
-    elif error_type == "PermissionError":
-        return f"Permission denied: {error_message}"
-    elif error_type == "ConnectionError":
-        return "Network connection error. Please check your internet connection."
-    elif error_type == "TimeoutError":
-        return "Operation timed out. Please try again."
-    elif error_type == "MemoryError":
-        return "Insufficient memory. Try processing a smaller file."
-    else:
-        return f"An unexpected error occurred: {error_message}"
+    error_messages = {
+        "FileNotFoundError": f"File not found: {error_message}",
+        "PermissionError": f"Permission denied: {error_message}",
+        "ConnectionError": "Network connection error. Please check your internet connection.",
+        "TimeoutError": "Operation timed out. Please try again.",
+        "MemoryError": "Insufficient memory. Try processing a smaller file.",
+    }
+
+    return error_messages.get(error_type, f"An unexpected error occurred: {error_message}")

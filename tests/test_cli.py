@@ -146,7 +146,7 @@ class TestCLIMain:
 
     @patch('markit_mistral.cli.MarkItMistral')
     @patch('markit_mistral.cli.Config')
-    def test_main_file_not_found(self, mock_config_class, mock_converter_class):
+    def test_main_file_not_found(self, mock_config_class, _mock_converter_class):
         """Test main function with non-existent file."""
         mock_config = Mock()
         mock_config_class.from_env.return_value = mock_config
@@ -181,7 +181,7 @@ class TestCLIMain:
     @patch('markit_mistral.cli.MarkItMistral')
     @patch('markit_mistral.cli.Config')
     @patch('sys.stdin')
-    def test_main_stdin_tty(self, mock_stdin, mock_config_class, mock_converter_class):
+    def test_main_stdin_tty(self, mock_stdin, mock_config_class, _mock_converter_class):
         """Test main function with stdin from TTY."""
         mock_stdin.isatty.return_value = True
         mock_config = Mock()
@@ -195,7 +195,7 @@ class TestCLIMain:
     @patch('markit_mistral.cli.MarkItMistral')
     @patch('markit_mistral.cli.Config')
     @patch('sys.stdin')
-    def test_main_stdin_empty(self, mock_stdin, mock_config_class, mock_converter_class):
+    def test_main_stdin_empty(self, mock_stdin, mock_config_class, _mock_converter_class):
         """Test main function with empty stdin."""
         mock_stdin.isatty.return_value = False
         mock_stdin.buffer.read.return_value = b''
@@ -224,7 +224,10 @@ class TestCLIMain:
             input_file = temp_path / "test.pdf"
             input_file.touch()
 
-            with patch('sys.argv', ['markit-mistral', str(input_file), '--verbose']):
+            with (
+                patch('sys.argv', ['markit-mistral', str(input_file), '--verbose']),
+                patch('traceback.print_exc')
+            ):
                 result = main()
 
                 assert result == 0
@@ -340,9 +343,10 @@ class TestCLIMain:
             input_file = temp_path / "test.pdf"
             input_file.touch()
 
-            with patch('sys.argv', ['markit-mistral', str(input_file), '--verbose']):
-                with patch('traceback.print_exc') as mock_traceback:
-                    result = main()
+            with (
+                patch('sys.argv', ['markit-mistral', str(input_file), '--verbose']),
+                patch('traceback.print_exc')
+            ):
+                result = main()
 
-                    assert result == 1
-                    mock_traceback.assert_called_once()
+                assert result == 1

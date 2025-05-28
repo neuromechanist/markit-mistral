@@ -59,7 +59,7 @@ class OCRProcessor:
         try:
             self.client = Mistral(api_key=self.api_key)
         except Exception as e:
-            raise APIError(f"Failed to initialize Mistral client: {e}")
+            raise APIError(f"Failed to initialize Mistral client: {e}") from e
 
         self.max_retries = max_retries
         self.retry_delay = retry_delay
@@ -87,15 +87,15 @@ class OCRProcessor:
             with open(image_path, "rb") as image_file:
                 image_data = image_file.read()
         except PermissionError as e:
-            raise FileCorruptedError(str(image_path), f"Permission denied: {e}")
+            raise FileCorruptedError(str(image_path), f"Permission denied: {e}") from e
         except Exception as e:
-            raise FileCorruptedError(str(image_path), f"Failed to read image file: {e}")
+            raise FileCorruptedError(str(image_path), f"Failed to read image file: {e}") from e
 
         try:
             base64_encoded = base64.b64encode(image_data).decode("utf-8")
             return f"data:{mime_type};base64,{base64_encoded}"
         except Exception as e:
-            raise OCRProcessingError(f"Failed to encode image as base64: {e}")
+            raise OCRProcessingError(f"Failed to encode image as base64: {e}") from e
 
     def _encode_pdf_to_data_uri(self, pdf_path: str | Path) -> str:
         """Encode a PDF file to a data URI.
@@ -117,15 +117,15 @@ class OCRProcessor:
             with open(pdf_path, "rb") as pdf_file:
                 pdf_data = pdf_file.read()
         except PermissionError as e:
-            raise FileCorruptedError(str(pdf_path), f"Permission denied: {e}")
+            raise FileCorruptedError(str(pdf_path), f"Permission denied: {e}") from e
         except Exception as e:
-            raise FileCorruptedError(str(pdf_path), f"Failed to read PDF file: {e}")
+            raise FileCorruptedError(str(pdf_path), f"Failed to read PDF file: {e}") from e
 
         try:
             base64_encoded = base64.b64encode(pdf_data).decode("utf-8")
             return f"data:application/pdf;base64,{base64_encoded}"
         except Exception as e:
-            raise OCRProcessingError(f"Failed to encode PDF as base64: {e}")
+            raise OCRProcessingError(f"Failed to encode PDF as base64: {e}") from e
 
     def _process_with_retry(self, document_config: dict, include_images: bool = True) -> dict:
         """Process document with retry logic.
@@ -191,9 +191,9 @@ class OCRProcessor:
         try:
             file_size = pdf_path.stat().st_size
         except FileNotFoundError:
-            raise FileNotFoundError(f"PDF file not found: {pdf_path}")
+            raise FileNotFoundError(f"PDF file not found: {pdf_path}") from None
         except Exception as e:
-            raise FileCorruptedError(str(pdf_path), f"Cannot access file: {e}")
+            raise FileCorruptedError(str(pdf_path), f"Cannot access file: {e}") from e
 
         file_size_mb = file_size / (1024 * 1024)
         logger.debug(f"PDF file size: {file_size_mb:.2f} MB")
@@ -220,7 +220,7 @@ class OCRProcessor:
             raise
         except Exception as e:
             logger.error(f"Failed to process PDF {pdf_path}: {e}")
-            raise OCRProcessingError(f"PDF processing failed: {e}")
+            raise OCRProcessingError(f"PDF processing failed: {e}") from e
 
     def process_image(self, image_path: str | Path, include_images: bool = True) -> dict:
         """Process an image file using Mistral OCR.
