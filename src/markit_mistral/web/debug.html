@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MarkIt Mistral - Debug Test</title>
+    
+    <!-- PyScript CSS and JS -->
+    <link rel="stylesheet" href="https://pyscript.net/releases/2023.12.1/core.css">
+    <script type="module" src="https://pyscript.net/releases/2023.12.1/core.js"></script>
+    
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>MarkIt Mistral - PyScript Debug Test</h1>
+    
+    <div id="status">Loading...</div>
+    
+    <button onclick="testPyScript()">Test PyScript Communication</button>
+    <button onclick="testDebugMode()">Test Debug Mode</button>
+    
+    <h3>Console Output:</h3>
+    <div id="console-output" style="background: #f5f5f5; padding: 10px; height: 300px; overflow-y: auto; font-family: monospace; white-space: pre-wrap;"></div>
+
+    <!-- Simple PyScript test -->
+    <py-config>
+        packages = ["json"]
+    </py-config>
+
+    <py-script>
+        import js
+        
+        # Immediate test
+        js.console.log("🚀 PyScript Debug Test: Starting...")
+        
+        def test_function():
+            js.console.log("✅ PyScript Debug Test: Function called successfully!")
+            return "PyScript is working!"
+        
+        # Expose function to JavaScript
+        js.testPyScriptFunction = test_function
+        
+        # Test debug logging
+        def debug_log_test(message):
+            js.console.log(f"[DEBUG] {message}")
+            
+        js.debugLogTest = debug_log_test
+        
+        # Update status
+        status_div = js.document.getElementById("status")
+        status_div.innerHTML = '<div class="success">✅ PyScript loaded successfully!</div>'
+        
+        js.console.log("✅ PyScript Debug Test: Initialization complete")
+    </py-script>
+
+    <script>
+        // Capture console logs and display them
+        const originalLog = console.log;
+        const originalError = console.error;
+        const outputDiv = document.getElementById('console-output');
+        
+        function addToOutput(message, type = 'log') {
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? '#d63384' : '#0f5132';
+            outputDiv.innerHTML += `<span style="color: ${color}">[${timestamp}] ${message}</span>\n`;
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+        }
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            addToOutput(args.join(' '), 'log');
+        };
+        
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            addToOutput(args.join(' '), 'error');
+        };
+        
+        function testPyScript() {
+            console.log('🧪 Testing PyScript communication...');
+            if (typeof testPyScriptFunction !== 'undefined') {
+                const result = testPyScriptFunction();
+                console.log('✅ PyScript function result:', result);
+            } else {
+                console.error('❌ PyScript function not found');
+            }
+        }
+        
+        function testDebugMode() {
+            console.log('🧪 Testing debug mode...');
+            if (typeof debugLogTest !== 'undefined') {
+                debugLogTest('Debug mode test message');
+                console.log('✅ Debug log test completed');
+            } else {
+                console.error('❌ Debug log function not found');
+            }
+        }
+        
+        // Check PyScript status after 3 seconds
+        setTimeout(() => {
+            if (typeof testPyScriptFunction !== 'undefined') {
+                console.log('✅ PyScript is fully loaded and functional');
+            } else {
+                console.error('❌ PyScript failed to load properly');
+            }
+        }, 3000);
+    </script>
+</body>
+</html> 

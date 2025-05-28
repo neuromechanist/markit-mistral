@@ -133,7 +133,7 @@ class MarkdownFormatter:
         # Pattern to match markdown image syntax: ![alt](filename)
         pattern = r"!\[([^\]]*)\]\(([^)]+)\)"
 
-        def replace_image_ref(match):
+        def replace_image_ref(match: re.Match[str]) -> str:
             alt_text = match.group(1)
             filename = match.group(2)
 
@@ -205,7 +205,7 @@ class MarkdownFormatter:
         """
 
         # Add proper spacing around operators in inline math
-        def enhance_inline_math(match):
+        def enhance_inline_math(match: re.Match[str]) -> str:
             math_content = match.group(1)
             # Add spaces around key operators
             math_content = re.sub(
@@ -331,7 +331,7 @@ class MarkdownFormatter:
 
         return content.strip() + "\n"
 
-    def extract_metadata(self, content: str) -> dict[str, str | int | list[str]]:
+    def extract_metadata(self, content: str) -> dict[str, object]:
         """Extract metadata from markdown content.
 
         Args:

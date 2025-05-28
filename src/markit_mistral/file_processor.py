@@ -83,7 +83,7 @@ class ImageProcessor(FileProcessor):
             "height": height,
             "mode": mode,
             "format": format_name,
-            "mime_type": mimetypes.guess_type(str(file_path))[0],
+            "mime_type": mimetypes.guess_type(str(file_path))[0] or "unknown",
         }
 
 
@@ -134,7 +134,7 @@ class PDFProcessor(FileProcessor):
             "size_bytes": file_size,
             "size_mb": round(file_size / (1024 * 1024), 2),
             "extension": file_path.suffix.lower(),
-            "page_count": page_count,
+            "page_count": page_count or 0,
             "mime_type": "application/pdf",
         }
 

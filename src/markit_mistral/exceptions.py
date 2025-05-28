@@ -213,9 +213,9 @@ def handle_api_error(error: Exception) -> APIError:
         else:
             return APIQuotaError()
     elif "timeout" in error_message:
-        return NetworkError("Request timed out")
+        return APIError("Request timed out")
     elif "connection" in error_message or "network" in error_message:
-        return NetworkError()
+        return APIError("Network connection error")
     else:
         return APIError(f"API request failed: {error}")
 
