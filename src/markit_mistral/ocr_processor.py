@@ -157,7 +157,7 @@ class OCRProcessor:
                 logger.warning(f"OCR attempt {attempt + 1} failed: {e}")
 
                 # Don't retry on certain errors
-                if isinstance(last_exception, (APIKeyError, APIQuotaError)):
+                if isinstance(last_exception, APIKeyError | APIQuotaError):
                     break
 
                 if attempt < self.max_retries - 1:

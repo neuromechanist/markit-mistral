@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class OutputManager:
     """
     Manages output files, directories, and metadata for markit-mistral conversions.
-    
+
     Handles file naming conventions, directory structure, metadata preservation,
     and optional packaging of complete conversion results.
     """

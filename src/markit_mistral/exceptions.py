@@ -12,7 +12,7 @@ class MarkItMistralError(Exception):
     def __init__(self, message: str, details: str | None = None):
         """
         Initialize the exception.
-        
+
         Args:
             message: Main error message.
             details: Additional details about the error.
@@ -39,7 +39,7 @@ class APIError(MarkItMistralError):
     def __init__(self, message: str, status_code: int | None = None, details: str | None = None):
         """
         Initialize the API error.
-        
+
         Args:
             message: Main error message.
             status_code: HTTP status code if applicable.
@@ -184,10 +184,10 @@ class NetworkError(MarkItMistralError):
 def handle_api_error(error: Exception) -> APIError:
     """
     Convert various API errors to appropriate custom exceptions.
-    
+
     Args:
         error: The original exception from the API.
-        
+
     Returns:
         Appropriate APIError subclass.
     """
@@ -211,11 +211,11 @@ def handle_api_error(error: Exception) -> APIError:
 def handle_file_error(error: Exception, file_path: str) -> FileProcessingError:
     """
     Convert various file errors to appropriate custom exceptions.
-    
+
     Args:
         error: The original exception.
         file_path: Path to the file that caused the error.
-        
+
     Returns:
         Appropriate FileProcessingError subclass.
     """
@@ -237,10 +237,10 @@ def handle_file_error(error: Exception, file_path: str) -> FileProcessingError:
 def get_user_friendly_message(error: Exception) -> str:
     """
     Get a user-friendly error message for any exception.
-    
+
     Args:
         error: The exception to format.
-        
+
     Returns:
         User-friendly error message.
     """

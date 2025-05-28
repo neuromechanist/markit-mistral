@@ -25,17 +25,17 @@ Examples:
   # Basic usage
   markit-mistral document.pdf
   markit-mistral image.png -o output.md
-  
+
   # Image handling
   markit-mistral document.pdf --extract-images      # Extract images to folder
   markit-mistral document.pdf --base64-images       # Embed images as base64
   markit-mistral document.pdf --no-images           # Skip image processing
-  
+
   # Progress and output control
   markit-mistral large_document.pdf --progress      # Show progress bar
   markit-mistral document.pdf --quiet               # Silent mode
   markit-mistral document.pdf --verbose             # Detailed output
-  
+
   # Reading from stdin
   cat document.pdf | markit-mistral                 # Process from stdin
         """.strip(),
