@@ -11,6 +11,7 @@ from pathlib import Path
 from . import __description__, __version__
 from .config import Config
 from .converter import MarkItMistral
+from .exceptions import get_user_friendly_message, MarkItMistralError
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -270,12 +271,18 @@ def main() -> int:
 
         return 0
 
+    except MarkItMistralError as e:
+        # Handle our custom exceptions with user-friendly messages
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
     except Exception as e:
+        # Handle unexpected exceptions
         if args.verbose if 'args' in locals() else False:
             import traceback
             traceback.print_exc()
         else:
-            print(f"Error: {e}", file=sys.stderr)
+            user_message = get_user_friendly_message(e)
+            print(f"Error: {user_message}", file=sys.stderr)
         return 1
 
 

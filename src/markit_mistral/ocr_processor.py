@@ -15,6 +15,20 @@ from pathlib import Path
 from mistralai import Mistral
 from mistralai import SDKError
 
+from .exceptions import (
+    APIError,
+    APIKeyError,
+    APIQuotaError,
+    APIRateLimitError,
+    FileCorruptedError,
+    FileNotFoundError,
+    FileTooLargeError,
+    NetworkError,
+    OCRProcessingError,
+    OCRTimeoutError,
+    handle_api_error,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -44,12 +58,13 @@ class OCRProcessor:
         """
         self.api_key = api_key or os.getenv("MISTRAL_API_KEY")
         if not self.api_key:
-            raise ValueError(
-                "Mistral API key is required. Set MISTRAL_API_KEY environment variable "
-                "or pass api_key parameter."
-            )
+            raise APIKeyError()
 
-        self.client = Mistral(api_key=self.api_key)
+        try:
+            self.client = Mistral(api_key=self.api_key)
+        except Exception as e:
+            raise APIError(f"Failed to initialize Mistral client: {e}")
+            
         self.max_retries = max_retries
         self.retry_delay = retry_delay
         self.max_file_size_mb = max_file_size_mb
@@ -70,13 +85,21 @@ class OCRProcessor:
 
         mime_type, _ = mimetypes.guess_type(str(image_path))
         if not mime_type or not mime_type.startswith("image/"):
-            raise ValueError(f"File is not a valid image: {image_path}")
+            raise FileCorruptedError(str(image_path), "File is not a valid image")
 
-        with open(image_path, "rb") as image_file:
-            image_data = image_file.read()
+        try:
+            with open(image_path, "rb") as image_file:
+                image_data = image_file.read()
+        except PermissionError as e:
+            raise FileCorruptedError(str(image_path), f"Permission denied: {e}")
+        except Exception as e:
+            raise FileCorruptedError(str(image_path), f"Failed to read image file: {e}")
 
-        base64_encoded = base64.b64encode(image_data).decode("utf-8")
-        return f"data:{mime_type};base64,{base64_encoded}"
+        try:
+            base64_encoded = base64.b64encode(image_data).decode("utf-8")
+            return f"data:{mime_type};base64,{base64_encoded}"
+        except Exception as e:
+            raise OCRProcessingError(f"Failed to encode image as base64: {e}")
 
     def _encode_pdf_to_data_uri(self, pdf_path: str | Path) -> str:
         """Encode a PDF file to a data URI.
@@ -92,13 +115,21 @@ class OCRProcessor:
             raise FileNotFoundError(f"PDF file not found: {pdf_path}")
 
         if pdf_path.suffix.lower() != ".pdf":
-            raise ValueError(f"File is not a PDF: {pdf_path}")
+            raise FileCorruptedError(str(pdf_path), "File is not a PDF")
 
-        with open(pdf_path, "rb") as pdf_file:
-            pdf_data = pdf_file.read()
+        try:
+            with open(pdf_path, "rb") as pdf_file:
+                pdf_data = pdf_file.read()
+        except PermissionError as e:
+            raise FileCorruptedError(str(pdf_path), f"Permission denied: {e}")
+        except Exception as e:
+            raise FileCorruptedError(str(pdf_path), f"Failed to read PDF file: {e}")
 
-        base64_encoded = base64.b64encode(pdf_data).decode("utf-8")
-        return f"data:application/pdf;base64,{base64_encoded}"
+        try:
+            base64_encoded = base64.b64encode(pdf_data).decode("utf-8")
+            return f"data:application/pdf;base64,{base64_encoded}"
+        except Exception as e:
+            raise OCRProcessingError(f"Failed to encode PDF as base64: {e}")
 
     def _process_with_retry(self, document_config: dict, include_images: bool = True) -> dict:
         """Process document with retry logic.
@@ -126,8 +157,12 @@ class OCRProcessor:
                 return response
 
             except SDKError as e:
-                last_exception = e
+                last_exception = handle_api_error(e)
                 logger.warning(f"OCR attempt {attempt + 1} failed: {e}")
+
+                # Don't retry on certain errors
+                if isinstance(last_exception, (APIKeyError, APIQuotaError)):
+                    break
 
                 if attempt < self.max_retries - 1:
                     sleep_time = self.retry_delay * (2 ** attempt)  # Exponential backoff
@@ -137,11 +172,11 @@ class OCRProcessor:
                     logger.error(f"All {self.max_retries} OCR attempts failed")
 
             except Exception as e:
-                last_exception = e
+                last_exception = handle_api_error(e)
                 logger.error(f"Unexpected error during OCR: {e}")
                 break
 
-        raise last_exception or Exception("OCR processing failed")
+        raise last_exception or OCRProcessingError("OCR processing failed after all retries")
 
     def process_pdf(self, pdf_path: str | Path, include_images: bool = True) -> dict:
         """Process a PDF file using Mistral OCR.
@@ -156,13 +191,20 @@ class OCRProcessor:
         logger.info(f"Processing PDF: {pdf_path}")
 
         pdf_path = Path(pdf_path)
-        file_size = pdf_path.stat().st_size
-        logger.debug(f"PDF file size: {file_size / (1024 * 1024):.2f} MB")
+        
+        try:
+            file_size = pdf_path.stat().st_size
+        except FileNotFoundError:
+            raise FileNotFoundError(f"PDF file not found: {pdf_path}")
+        except Exception as e:
+            raise FileCorruptedError(str(pdf_path), f"Cannot access file: {e}")
+            
+        file_size_mb = file_size / (1024 * 1024)
+        logger.debug(f"PDF file size: {file_size_mb:.2f} MB")
 
         # Check file size limit
-        max_size_bytes = self.max_file_size_mb * 1024 * 1024
-        if file_size > max_size_bytes:
-            raise ValueError(f"PDF file too large: {file_size / (1024 * 1024):.2f} MB (max {self.max_file_size_mb} MB)")
+        if file_size_mb > self.max_file_size_mb:
+            raise FileTooLargeError(str(pdf_path), file_size_mb, self.max_file_size_mb)
 
         try:
             data_uri = self._encode_pdf_to_data_uri(pdf_path)
@@ -177,9 +219,12 @@ class OCRProcessor:
             logger.info(f"Successfully processed PDF with {len(response.pages)} pages")
             return response
 
+        except (FileNotFoundError, FileCorruptedError, FileTooLargeError):
+            # Re-raise our custom exceptions
+            raise
         except Exception as e:
             logger.error(f"Failed to process PDF {pdf_path}: {e}")
-            raise
+            raise OCRProcessingError(f"PDF processing failed: {e}")
 
     def process_image(self, image_path: str | Path, include_images: bool = True) -> dict:
         """Process an image file using Mistral OCR.
