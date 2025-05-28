@@ -23,4 +23,4 @@ __all__ = [
     "FileProcessorManager",
     "create_file_processor",
     "MarkdownFormatter",
-] 
+]

@@ -8,7 +8,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from . import __version__, __description__
+from . import __description__, __version__
 from .config import Config
 from .converter import MarkItMistral
 
@@ -93,7 +93,7 @@ def main() -> int:
     try:
         # Create configuration
         config = Config.from_env()
-        
+
         # Override config with command line arguments
         if args.api_key:
             config.mistral_api_key = args.api_key
@@ -107,30 +107,30 @@ def main() -> int:
             config.log_level = "DEBUG"
         if args.quiet:
             config.log_level = "ERROR"
-        
+
         # Setup logging
         config.setup_logging()
-        
+
         # Validate configuration
         config.validate()
-        
+
         # Create converter
         converter = MarkItMistral(config=config)
-        
+
         # Determine input source
         if args.input:
             input_path = Path(args.input)
             if not input_path.exists():
                 print(f"Error: Input file not found: {input_path}", file=sys.stderr)
                 return 1
-            
+
             # Validate file type
             if not converter.file_processor.is_supported(input_path):
                 supported = ", ".join(converter.file_processor.get_supported_extensions())
                 print(f"Error: Unsupported file type: {input_path.suffix}", file=sys.stderr)
                 print(f"Supported formats: {supported}", file=sys.stderr)
                 return 1
-            
+
             # Convert file
             if args.output:
                 output_path = Path(args.output)
@@ -140,20 +140,20 @@ def main() -> int:
             else:
                 # Output to stdout
                 result_path = converter.convert_file(input_path)
-                with open(result_path, 'r', encoding='utf-8') as f:
+                with open(result_path, encoding='utf-8') as f:
                     print(f.read(), end='')
-                
+
                 # Clean up temporary file if we created one
                 if result_path.parent == config.get_temp_dir():
                     result_path.unlink()
-        
+
         else:
             # TODO: Implement stdin processing
             print("Error: stdin processing not yet implemented", file=sys.stderr)
             return 1
-        
+
         return 0
-        
+
     except Exception as e:
         if args.verbose if 'args' in locals() else False:
             import traceback
@@ -164,4 +164,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main()) 
+    sys.exit(main())

@@ -3,7 +3,6 @@
 import logging
 import re
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
 
 logger = logging.getLogger(__name__)
 
@@ -23,10 +22,10 @@ class MarkdownFormatter:
 
     def format_document(
         self,
-        pages: List[Dict],
-        image_paths: List[Path],
+        pages: list[dict],
+        image_paths: list[Path],
         output_dir: Path,
-        document_title: Optional[str] = None,
+        document_title: str | None = None,
     ) -> str:
         """Format a complete document from OCR pages.
         
@@ -40,42 +39,42 @@ class MarkdownFormatter:
             Formatted markdown content.
         """
         markdown_parts = []
-        
+
         # Add document title if provided
         if document_title:
             markdown_parts.append(f"# {document_title}\n")
-        
+
         # Create image mapping for reference replacement
         image_map = self._create_image_map(image_paths, output_dir)
-        
+
         # Process each page
         for page_idx, page in enumerate(pages):
             if hasattr(page, 'markdown') and page.markdown:
                 page_content = page.markdown
-                
+
                 # Process math equations if enabled
                 if self.preserve_math:
                     page_content = self._process_math_equations(page_content)
-                
+
                 # Update image references
                 page_content = self._update_image_references(page_content, image_map)
-                
+
                 # Add page separator for multi-page documents
                 if page_idx > 0 and len(pages) > 1:
                     markdown_parts.append("\n---\n")
-                
+
                 # Clean and format the content
                 page_content = self._clean_markdown_content(page_content)
-                
+
                 markdown_parts.append(page_content)
-        
+
         # Join all parts and apply final formatting
         content = "\n\n".join(markdown_parts)
         content = self._apply_final_formatting(content)
-        
+
         return content
 
-    def _create_image_map(self, image_paths: List[Path], output_dir: Path) -> Dict[str, str]:
+    def _create_image_map(self, image_paths: list[Path], output_dir: Path) -> dict[str, str]:
         """Create a mapping of image filenames to their appropriate references.
         
         Args:
@@ -86,7 +85,7 @@ class MarkdownFormatter:
             Dictionary mapping image filenames to markdown references.
         """
         image_map = {}
-        
+
         for img_path in image_paths:
             if self.base64_images:
                 # Convert to base64 data URI
@@ -94,17 +93,17 @@ class MarkdownFormatter:
                     import base64
                     with open(img_path, 'rb') as f:
                         img_data = f.read()
-                    
+
                     # Determine MIME type
                     import mimetypes
                     mime_type, _ = mimetypes.guess_type(str(img_path))
                     if not mime_type:
                         mime_type = "image/jpeg"  # default
-                    
+
                     base64_str = base64.b64encode(img_data).decode('utf-8')
                     data_uri = f"data:{mime_type};base64,{base64_str}"
                     image_map[img_path.name] = data_uri
-                    
+
                 except Exception as e:
                     logger.warning(f"Failed to encode image {img_path} as base64: {e}")
                     # Fallback to file path
@@ -114,10 +113,10 @@ class MarkdownFormatter:
                 # Use relative file path
                 rel_path = img_path.relative_to(output_dir)
                 image_map[img_path.name] = str(rel_path)
-        
+
         return image_map
 
-    def _update_image_references(self, content: str, image_map: Dict[str, str]) -> str:
+    def _update_image_references(self, content: str, image_map: dict[str, str]) -> str:
         """Update image references in markdown content.
         
         Args:
@@ -129,24 +128,24 @@ class MarkdownFormatter:
         """
         # Pattern to match markdown image syntax: ![alt](filename)
         pattern = r'!\[([^\]]*)\]\(([^)]+)\)'
-        
+
         def replace_image_ref(match):
             alt_text = match.group(1)
             filename = match.group(2)
-            
+
             # Try to find the image in our map
             for img_name, img_ref in image_map.items():
                 if filename in img_name or img_name in filename:
                     return f"![{alt_text}]({img_ref})"
-            
+
             # If no exact match, try partial matches
             for img_name, img_ref in image_map.items():
                 if any(part in img_name.lower() for part in filename.lower().split('_')):
                     return f"![{alt_text}]({img_ref})"
-            
+
             # Keep original reference if no match found
             return match.group(0)
-        
+
         return re.sub(pattern, replace_image_ref, content)
 
     def _process_math_equations(self, content: str) -> str:
@@ -162,7 +161,7 @@ class MarkdownFormatter:
         content = self._normalize_math_delimiters(content)
         content = self._enhance_math_formatting(content)
         content = self._fix_common_math_errors(content)
-        
+
         return content
 
     def _normalize_math_delimiters(self, content: str) -> str:
@@ -176,17 +175,17 @@ class MarkdownFormatter:
         """
         # Convert \(...\) to $...$
         content = re.sub(r'\\?\\\(([^)]+)\\?\\\)', r'$\1$', content)
-        
+
         # Convert \[...\] to $$...$$
         content = re.sub(r'\\?\\\[([^\]]+)\\?\\\]', r'$$\1$$', content)
-        
+
         # Fix malformed delimiters
         content = re.sub(r'\$\s*\$([^$]+)\$\s*\$', r'$$\1$$', content)
-        
+
         # Ensure display math has proper spacing
         content = re.sub(r'([^\n])\$\$', r'\1\n$$', content)
         content = re.sub(r'\$\$([^\n])', r'$$\n\1', content)
-        
+
         return content
 
     def _enhance_math_formatting(self, content: str) -> str:
@@ -204,9 +203,9 @@ class MarkdownFormatter:
             # Add spaces around key operators
             math_content = re.sub(r'([a-zA-Z0-9])([\+\-\=])([a-zA-Z0-9])', r'\1 \2 \3', math_content)
             return f'${math_content}$'
-        
+
         content = re.sub(r'\$([^$]+)\$', enhance_inline_math, content)
-        
+
         return content
 
     def _fix_common_math_errors(self, content: str) -> str:
@@ -226,10 +225,10 @@ class MarkdownFormatter:
             r'\\sqrt\s*\{\s*([^}]+)\s*\}': r'\\sqrt{\1}',  # Fix square roots
             r'\\sum\s*_\s*\{\s*([^}]+)\s*\}\s*\^\s*\{\s*([^}]+)\s*\}': r'\\sum_{{\1}}^{{\2}}',  # Fix summations
         }
-        
+
         for pattern, replacement in corrections.items():
             content = re.sub(pattern, replacement, content)
-        
+
         return content
 
     def _clean_markdown_content(self, content: str) -> str:
@@ -243,20 +242,20 @@ class MarkdownFormatter:
         """
         # Remove excessive whitespace
         content = re.sub(r'\n\s*\n\s*\n+', '\n\n', content)
-        
+
         # Fix heading formatting
         content = re.sub(r'^(#{1,6})\s*(.+)', r'\1 \2', content, flags=re.MULTILINE)
-        
+
         # Ensure proper list formatting
         content = re.sub(r'^(\s*[-*+])\s+', r'\1 ', content, flags=re.MULTILINE)
         content = re.sub(r'^(\s*\d+\.)\s+', r'\1 ', content, flags=re.MULTILINE)
-        
+
         # Fix table formatting
         content = self._fix_table_formatting(content)
-        
+
         # Remove trailing whitespace
         content = re.sub(r'[ \t]+$', '', content, flags=re.MULTILINE)
-        
+
         return content.strip()
 
     def _fix_table_formatting(self, content: str) -> str:
@@ -272,7 +271,7 @@ class MarkdownFormatter:
         lines = content.split('\n')
         in_table = False
         result_lines = []
-        
+
         for line in lines:
             # Detect table rows (lines with multiple | characters)
             if '|' in line and line.count('|') >= 2:
@@ -283,7 +282,7 @@ class MarkdownFormatter:
                     parts = parts[1:]
                 if parts and not parts[-1]:
                     parts = parts[:-1]
-                
+
                 if parts:  # If we have content
                     cleaned_line = '| ' + ' | '.join(parts) + ' |'
                     result_lines.append(cleaned_line)
@@ -297,7 +296,7 @@ class MarkdownFormatter:
                     result_lines.append('')
                 result_lines.append(line)
                 in_table = False
-        
+
         return '\n'.join(result_lines)
 
     def _apply_final_formatting(self, content: str) -> str:
@@ -311,19 +310,19 @@ class MarkdownFormatter:
         """
         # Ensure proper spacing around headers
         content = re.sub(r'(^|\n)(#{1,6}\s+[^\n]+)\n(?!\n)', r'\1\2\n\n', content)
-        
+
         # Ensure proper spacing around code blocks
         content = re.sub(r'(^|\n)(```[^`]*```)\n(?!\n)', r'\1\2\n\n', content)
-        
+
         # Ensure proper spacing around block quotes
         content = re.sub(r'(^|\n)(>[^\n]+)\n(?!\n)', r'\1\2\n\n', content)
-        
+
         # Final cleanup
         content = re.sub(r'\n{3,}', '\n\n', content)
-        
+
         return content.strip() + '\n'
 
-    def extract_metadata(self, content: str) -> Dict[str, Union[str, int, List[str]]]:
+    def extract_metadata(self, content: str) -> dict[str, str | int | list[str]]:
         """Extract metadata from markdown content.
         
         Args:
@@ -342,26 +341,26 @@ class MarkdownFormatter:
             'tables': 0,
             'links': [],
         }
-        
+
         # Extract headers
         headers = re.findall(r'^(#{1,6})\s+(.+)$', content, re.MULTILINE)
         metadata['headers'] = [(len(h[0]), h[1].strip()) for h in headers]
-        
+
         # Count math equations
         inline_math = re.findall(r'\$[^$]+\$', content)
         display_math = re.findall(r'\$\$[^$]+\$\$', content)
         metadata['math_equations'] = len(inline_math) + len(display_math)
-        
+
         # Extract image references
         images = re.findall(r'!\[[^\]]*\]\(([^)]+)\)', content)
         metadata['images'] = images
-        
+
         # Count tables
         table_lines = [line for line in content.split('\n') if '|' in line and line.count('|') >= 2]
         metadata['tables'] = len(set(table_lines)) // 2 if table_lines else 0
-        
+
         # Extract links
         links = re.findall(r'\[([^\]]+)\]\(([^)]+)\)', content)
         metadata['links'] = links
-        
-        return metadata 
+
+        return metadata

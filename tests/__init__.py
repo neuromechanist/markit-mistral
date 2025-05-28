@@ -1,1 +1,1 @@
-# Tests package for markit-mistral 
+# Tests package for markit-mistral
