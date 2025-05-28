@@ -75,14 +75,13 @@ def main():
             # Convert the file
             print(f"Converting {sample_file}...")
             output_path = converter.convert_file(
-                input_path=sample_file,
-                output_dir=Path("output")
+                input_path=sample_file, output_dir=Path("output")
             )
 
             print(f"✓ Successfully converted to: {output_path}")
 
             # Read and display first few lines of output
-            with open(output_path, encoding='utf-8') as f:
+            with open(output_path, encoding="utf-8") as f:
                 lines = f.readlines()[:10]  # First 10 lines
 
             print("\nFirst 10 lines of generated markdown:")
