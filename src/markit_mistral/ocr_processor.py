@@ -284,9 +284,26 @@ class OCRProcessor:
             List of paths to saved image files.
         """
         output_dir = Path(output_dir)
-        output_dir.mkdir(parents=True, exist_ok=True)
-
         saved_images = []
+
+        # First, check if there are any images to extract
+        has_images = False
+        for page in response.pages:
+            if hasattr(page, 'images') and page.images:
+                for image in page.images:
+                    if hasattr(image, 'image_base64') and image.image_base64:
+                        has_images = True
+                        break
+            if has_images:
+                break
+        
+        # Only create directory if we have images to save
+        if not has_images:
+            logger.debug("No images found in OCR response")
+            return saved_images
+        
+        # Create output directory only when needed
+        output_dir.mkdir(parents=True, exist_ok=True)
 
         for page_idx, page in enumerate(response.pages):
             if hasattr(page, 'images') and page.images:

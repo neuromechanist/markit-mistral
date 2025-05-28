@@ -21,10 +21,22 @@ def create_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
+  # Basic usage
   markit-mistral document.pdf
   markit-mistral image.png -o output.md
-  cat document.pdf | markit-mistral
-  markit-mistral document.pdf --extract-images
+  
+  # Image handling
+  markit-mistral document.pdf --extract-images      # Extract images to folder
+  markit-mistral document.pdf --base64-images       # Embed images as base64
+  markit-mistral document.pdf --no-images           # Skip image processing
+  
+  # Progress and output control
+  markit-mistral large_document.pdf --progress      # Show progress bar
+  markit-mistral document.pdf --quiet               # Silent mode
+  markit-mistral document.pdf --verbose             # Detailed output
+  
+  # Reading from stdin
+  cat document.pdf | markit-mistral                 # Process from stdin
         """.strip(),
     )
 
@@ -54,7 +66,13 @@ Examples:
     parser.add_argument(
         "--extract-images",
         action="store_true",
-        help="extract images to separate files alongside markdown output"
+        help="extract images to separate files alongside markdown output (default: extract if images exist)"
+    )
+
+    parser.add_argument(
+        "--no-images",
+        action="store_true",
+        help="suppress image extraction (overrides --extract-images)"
     )
 
     parser.add_argument(
@@ -82,6 +100,18 @@ Examples:
         help="suppress all output except errors"
     )
 
+    parser.add_argument(
+        "--progress",
+        action="store_true",
+        help="show progress bars for long operations (default: auto-detect TTY)"
+    )
+
+    parser.add_argument(
+        "--batch",
+        action="store_true",
+        help="enable batch processing mode for multiple files"
+    )
+
     return parser
 
 
@@ -97,8 +127,14 @@ def main() -> int:
         # Override config with command line arguments
         if args.api_key:
             config.mistral_api_key = args.api_key
-        if args.extract_images:
+        
+        # Handle image extraction options (--no-images overrides --extract-images)
+        if args.no_images:
+            config.include_images = False
+        elif args.extract_images:
             config.include_images = True
+        # Default: include_images is True unless explicitly disabled
+        
         if args.base64_images:
             config.base64_images = True
         if hasattr(args, 'preserve_math') and args.preserve_math is not None:
@@ -107,6 +143,11 @@ def main() -> int:
             config.log_level = "DEBUG"
         if args.quiet:
             config.log_level = "ERROR"
+
+        # Configure progress bars (default to auto-detect TTY unless specified)
+        show_progress = args.progress if hasattr(args, 'progress') else sys.stdout.isatty()
+        if args.quiet:
+            show_progress = False
 
         # Setup logging
         config.setup_logging()
@@ -148,9 +189,52 @@ def main() -> int:
                     result_path.unlink()
 
         else:
-            # TODO: Implement stdin processing
-            print("Error: stdin processing not yet implemented", file=sys.stderr)
-            return 1
+            # Process from stdin
+            if sys.stdin.isatty():
+                print("Error: No input file provided and stdin is a TTY", file=sys.stderr)
+                print("Use: markit-mistral <file> or pipe content to stdin", file=sys.stderr)
+                return 1
+            
+            # Read binary data from stdin
+            import tempfile
+            input_data = sys.stdin.buffer.read()
+            
+            if not input_data:
+                print("Error: No data received from stdin", file=sys.stderr)
+                return 1
+            
+            # Create temporary file
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
+                temp_file.write(input_data)
+                temp_input_path = Path(temp_file.name)
+            
+            try:
+                # Validate file type
+                if not converter.file_processor.is_supported(temp_input_path):
+                    print("Error: Unsupported file type from stdin", file=sys.stderr)
+                    supported = ", ".join(converter.file_processor.get_supported_extensions())
+                    print(f"Supported formats: {supported}", file=sys.stderr)
+                    return 1
+                
+                # Convert file
+                if args.output:
+                    output_path = Path(args.output)
+                    result_path = converter.convert_file(temp_input_path, output_path)
+                    if not args.quiet:
+                        print(f"Successfully converted to: {result_path}", file=sys.stderr)
+                else:
+                    # Output to stdout
+                    result_path = converter.convert_file(temp_input_path)
+                    with open(result_path, encoding='utf-8') as f:
+                        print(f.read(), end='')
+                    
+                    # Clean up temporary result file
+                    if result_path.parent == config.get_temp_dir():
+                        result_path.unlink()
+            
+            finally:
+                # Clean up temporary input file
+                temp_input_path.unlink(missing_ok=True)
 
         return 0
 
