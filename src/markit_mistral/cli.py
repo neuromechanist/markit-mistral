@@ -6,8 +6,12 @@ Provides a CLI similar to markitdown but using Mistral AI for OCR processing.
 
 import argparse
 import sys
+from pathlib import Path
+from typing import Optional
 
 from . import __version__, __description__
+from .config import Config
+from .converter import MarkItMistral
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -87,21 +91,77 @@ def main() -> int:
     parser = create_parser()
     args = parser.parse_args()
 
-    # TODO: Implement the actual conversion logic
-    print(f"markit-mistral v{__version__}")
-    print("This is a placeholder. Implementation coming soon!")
-    
-    if args.input:
-        print(f"Would process: {args.input}")
-    else:
-        print("Would process from stdin")
-    
-    if args.output:
-        print(f"Would output to: {args.output}")
-    else:
-        print("Would output to stdout")
-
-    return 0
+    try:
+        # Create configuration
+        config = Config.from_env()
+        
+        # Override config with command line arguments
+        if args.api_key:
+            config.mistral_api_key = args.api_key
+        if args.extract_images:
+            config.include_images = True
+        if args.base64_images:
+            config.base64_images = True
+        if hasattr(args, 'preserve_math') and args.preserve_math is not None:
+            config.preserve_math = args.preserve_math
+        if args.verbose:
+            config.log_level = "DEBUG"
+        if args.quiet:
+            config.log_level = "ERROR"
+        
+        # Setup logging
+        config.setup_logging()
+        
+        # Validate configuration
+        config.validate()
+        
+        # Create converter
+        converter = MarkItMistral(config=config)
+        
+        # Determine input source
+        if args.input:
+            input_path = Path(args.input)
+            if not input_path.exists():
+                print(f"Error: Input file not found: {input_path}", file=sys.stderr)
+                return 1
+            
+            # Validate file type
+            if not converter.file_processor.is_supported(input_path):
+                supported = ", ".join(converter.file_processor.get_supported_extensions())
+                print(f"Error: Unsupported file type: {input_path.suffix}", file=sys.stderr)
+                print(f"Supported formats: {supported}", file=sys.stderr)
+                return 1
+            
+            # Convert file
+            if args.output:
+                output_path = Path(args.output)
+                result_path = converter.convert_file(input_path, output_path)
+                if not args.quiet:
+                    print(f"Successfully converted to: {result_path}")
+            else:
+                # Output to stdout
+                result_path = converter.convert_file(input_path)
+                with open(result_path, 'r', encoding='utf-8') as f:
+                    print(f.read(), end='')
+                
+                # Clean up temporary file if we created one
+                if result_path.parent == config.get_temp_dir():
+                    result_path.unlink()
+        
+        else:
+            # TODO: Implement stdin processing
+            print("Error: stdin processing not yet implemented", file=sys.stderr)
+            return 1
+        
+        return 0
+        
+    except Exception as e:
+        if args.verbose if 'args' in locals() else False:
+            import traceback
+            traceback.print_exc()
+        else:
+            print(f"Error: {e}", file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":

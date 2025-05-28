@@ -10,10 +10,15 @@ __author__ = "Yahya"
 __email__ = ""
 __description__ = "PDF and image to markdown converter using Mistral AI OCR"
 
+from .config import Config
 from .converter import MarkItMistral
+from .file_processor import FileProcessorManager, create_file_processor
 from .ocr_processor import OCRProcessor
 
 __all__ = [
     "MarkItMistral",
     "OCRProcessor",
+    "Config",
+    "FileProcessorManager",
+    "create_file_processor",
 ] 

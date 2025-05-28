@@ -3,7 +3,7 @@ Tests for the CLI module.
 """
 
 import pytest
-from markit_mistral.cli import create_parser, main
+from markit_mistral.cli import create_parser
 
 
 def test_create_parser():
