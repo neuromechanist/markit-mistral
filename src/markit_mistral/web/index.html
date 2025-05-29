@@ -1061,11 +1061,15 @@
                             imageData = `data:image/png;base64,${imageData}`;
                         }
                         
-                        // Create consistent image naming
+                        // Create consistent image naming while preserving original extensions
                         let imageName;
                         if (image.id) {
                             // Use the ID provided by the API if available
-                            imageName = image.id.endsWith('.png') ? image.id : `${image.id}.png`;
+                            imageName = image.id;
+                            // Only add .png if there's no extension at all
+                            if (!/\.(png|jpe?g|gif|bmp|webp)$/i.test(imageName)) {
+                                imageName += '.png';
+                            }
                         } else {
                             // Generate consistent name: img-0.png, img-1.png, etc.
                             const globalImgIndex = extractedImages.length;
