@@ -11,7 +11,7 @@ requires-python = ">=3.10"
 license = "MIT"
 keywords = ["markdown", "pdf", "ocr", "mistral", "ai", "converter", "math", "equations"]
 authors = [
-    { name = "Yahya" },
+    { name = "Seyed Yahya Shirazi", email = "shirazi@ieee.org" },
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
