@@ -81,8 +81,8 @@ class ImageProcessor(FileProcessor):
             "extension": file_path.suffix.lower(),
             "width": width,
             "height": height,
-            "mode": mode,
-            "format": format_name,
+            "mode": mode or "unknown",
+            "format": format_name or "unknown",
             "mime_type": mimetypes.guess_type(str(file_path))[0] or "unknown",
         }
 
