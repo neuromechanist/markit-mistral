@@ -166,7 +166,9 @@ class MarkItMistral:
 
         # Extract and log metadata
         metadata = self.markdown_formatter.extract_metadata(markdown_content)
-        images_count = len(metadata['images']) if isinstance(metadata['images'], list) else 0
+        images_count = (
+            len(metadata["images"]) if isinstance(metadata["images"], list) else 0
+        )
         logger.info(
             f"Generated markdown: {metadata['word_count']} words, "
             f"{metadata['math_equations']} math equations, "
@@ -234,7 +236,9 @@ class MarkItMistral:
 
         # Extract and log metadata
         metadata = self.markdown_formatter.extract_metadata(markdown_content)
-        images_count = len(metadata['images']) if isinstance(metadata['images'], list) else 0
+        images_count = (
+            len(metadata["images"]) if isinstance(metadata["images"], list) else 0
+        )
         logger.info(
             f"Generated markdown: {metadata['word_count']} words, "
             f"{metadata['math_equations']} math equations, "

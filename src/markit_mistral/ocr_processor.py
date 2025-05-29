@@ -138,7 +138,9 @@ class OCRProcessor:
             raise OCRProcessingError(f"Failed to encode PDF as base64: {e}") from e
 
     def _process_with_retry(
-        self, document_config: DocumentURLChunk | ImageURLChunk, include_images: bool = True
+        self,
+        document_config: DocumentURLChunk | ImageURLChunk,
+        include_images: bool = True,
     ) -> OCRResponse:
         """Process document with retry logic.
 
@@ -191,7 +193,9 @@ class OCRProcessor:
             "OCR processing failed after all retries"
         )
 
-    def process_pdf(self, pdf_path: str | Path, include_images: bool = True) -> OCRResponse:
+    def process_pdf(
+        self, pdf_path: str | Path, include_images: bool = True
+    ) -> OCRResponse:
         """Process a PDF file using Mistral OCR.
 
         Args:
@@ -324,7 +328,9 @@ class OCRProcessor:
 
         return "\n\n".join(text_parts)
 
-    def extract_images(self, response: OCRResponse, output_dir: str | Path) -> list[Path]:
+    def extract_images(
+        self, response: OCRResponse, output_dir: str | Path
+    ) -> list[Path]:
         """Extract and save images from OCR response.
 
         Args:
