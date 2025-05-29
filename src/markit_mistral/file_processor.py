@@ -142,7 +142,7 @@ class PDFProcessor(FileProcessor):
 class FileProcessorManager:
     """Manager for handling different file types."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the file processor manager."""
         self.processors: list[FileProcessor] = [
             PDFProcessor(),

@@ -5,8 +5,12 @@ This module provides the MarkItMistral class which orchestrates the conversion
 of PDF and image files to markdown using Mistral AI OCR.
 """
 
+from __future__ import annotations
+
 import logging
 from pathlib import Path
+
+from mistralai.types.ocr_response import OCRResponse
 
 from .config import Config
 from .file_processor import create_file_processor
@@ -137,7 +141,7 @@ class MarkItMistral:
             raise ValueError(f"Unsupported file type: {input_path.suffix}")
 
         # Extract and save images if requested
-        image_paths = []
+        image_paths: list[Path] = []
         if self.config.include_images:
             # Create images subdirectory if needed
             if not self.config.base64_images:
@@ -164,10 +168,11 @@ class MarkItMistral:
 
         # Extract and log metadata
         metadata = self.markdown_formatter.extract_metadata(markdown_content)
+        images_count = len(metadata['images']) if isinstance(metadata['images'], list) else 0
         logger.info(
             f"Generated markdown: {metadata['word_count']} words, "
             f"{metadata['math_equations']} math equations, "
-            f"{len(metadata['images'])} images, "
+            f"{images_count} images, "
             f"{metadata['tables']} tables"
         )
 
@@ -204,7 +209,7 @@ class MarkItMistral:
         response = self.ocr_processor.process_url(url, self.config.include_images)
 
         # Extract and save images if requested
-        image_paths = []
+        image_paths: list[Path] = []
         if self.config.include_images:
             # Create images subdirectory if needed
             if not self.config.base64_images:
@@ -231,10 +236,11 @@ class MarkItMistral:
 
         # Extract and log metadata
         metadata = self.markdown_formatter.extract_metadata(markdown_content)
+        images_count = len(metadata['images']) if isinstance(metadata['images'], list) else 0
         logger.info(
             f"Generated markdown: {metadata['word_count']} words, "
             f"{metadata['math_equations']} math equations, "
-            f"{len(metadata['images'])} images, "
+            f"{images_count} images, "
             f"{metadata['tables']} tables"
         )
 

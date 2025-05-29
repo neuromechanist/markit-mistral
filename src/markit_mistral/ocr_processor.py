@@ -5,6 +5,8 @@ This module handles the interaction with Mistral AI OCR services
 to extract text from images and PDF pages.
 """
 
+from __future__ import annotations
+
 import base64
 import logging
 import mimetypes
@@ -12,7 +14,9 @@ import os
 import time
 from pathlib import Path
 
-from mistralai import Mistral, SDKError
+from mistralai import Mistral, DocumentURLChunk, ImageURLChunk
+from mistralai.sdk.exceptions import SDKError
+from mistralai.types.ocr_response import OCRResponse
 
 from .exceptions import (
     APIError,
@@ -22,6 +26,7 @@ from .exceptions import (
     FileNotFoundError,
     FileTooLargeError,
     OCRProcessingError,
+    UnsupportedFileTypeError,
     handle_api_error,
 )
 
@@ -132,16 +137,19 @@ class OCRProcessor:
             raise OCRProcessingError(f"Failed to encode PDF as base64: {e}") from e
 
     def _process_with_retry(
-        self, document_config: dict, include_images: bool = True
-    ) -> dict:
+        self, document_config: DocumentURLChunk | ImageURLChunk, include_images: bool = True
+    ) -> OCRResponse:
         """Process document with retry logic.
 
         Args:
-            document_config: Document configuration for the API.
+            document_config: Document configuration for Mistral API.
             include_images: Whether to include images in the response.
 
         Returns:
             OCR response from Mistral API.
+
+        Raises:
+            OCRProcessingError: If processing fails after all retries.
         """
         last_exception = None
 
@@ -182,7 +190,7 @@ class OCRProcessor:
             "OCR processing failed after all retries"
         )
 
-    def process_pdf(self, pdf_path: str | Path, include_images: bool = True) -> dict:
+    def process_pdf(self, pdf_path: str | Path, include_images: bool = True) -> OCRResponse:
         """Process a PDF file using Mistral OCR.
 
         Args:
@@ -213,7 +221,7 @@ class OCRProcessor:
         try:
             data_uri = self._encode_pdf_to_data_uri(pdf_path)
 
-            document_config = {"type": "document_url", "document_url": data_uri}
+            document_config = DocumentURLChunk(document_url=data_uri)
 
             response = self._process_with_retry(document_config, include_images)
 
@@ -229,7 +237,7 @@ class OCRProcessor:
 
     def process_image(
         self, image_path: str | Path, include_images: bool = True
-    ) -> dict:
+    ) -> OCRResponse:
         """Process an image file using Mistral OCR.
 
         Args:
@@ -256,7 +264,7 @@ class OCRProcessor:
         try:
             data_uri = self._encode_image_to_data_uri(image_path)
 
-            document_config = {"type": "image_url", "image_url": data_uri}
+            document_config = ImageURLChunk(image_url=data_uri)
 
             response = self._process_with_retry(document_config, include_images)
 
@@ -269,7 +277,7 @@ class OCRProcessor:
             logger.error(f"Failed to process image {image_path}: {e}")
             raise
 
-    def process_url(self, url: str, include_images: bool = True) -> dict:
+    def process_url(self, url: str, include_images: bool = True) -> OCRResponse:
         """Process a document from a URL using Mistral OCR.
 
         Args:
@@ -283,10 +291,11 @@ class OCRProcessor:
 
         try:
             # Determine document type based on URL
+            document_config: DocumentURLChunk | ImageURLChunk
             if url.lower().endswith((".pdf",)) or "pdf" in url.lower():
-                document_config = {"type": "document_url", "document_url": url}
+                document_config = DocumentURLChunk(document_url=url)
             else:
-                document_config = {"type": "image_url", "image_url": url}
+                document_config = ImageURLChunk(image_url=url)
 
             response = self._process_with_retry(document_config, include_images)
 
@@ -297,7 +306,7 @@ class OCRProcessor:
             logger.error(f"Failed to process URL {url}: {e}")
             raise
 
-    def extract_text(self, response: dict) -> str:
+    def extract_text(self, response: OCRResponse) -> str:
         """Extract plain text from OCR response.
 
         Args:
@@ -314,7 +323,7 @@ class OCRProcessor:
 
         return "\n\n".join(text_parts)
 
-    def extract_images(self, response: dict, output_dir: str | Path) -> list[Path]:
+    def extract_images(self, response: OCRResponse, output_dir: str | Path) -> list[Path]:
         """Extract and save images from OCR response.
 
         Args:
@@ -325,7 +334,7 @@ class OCRProcessor:
             List of paths to saved image files.
         """
         output_dir = Path(output_dir)
-        saved_images = []
+        saved_images: list[Path] = []
 
         # First, check if there are any images to extract
         has_images = False
@@ -380,7 +389,7 @@ class OCRProcessor:
         logger.info(f"Extracted {len(saved_images)} images to {output_dir}")
         return saved_images
 
-    def get_page_count(self, response: dict) -> int:
+    def get_page_count(self, response: OCRResponse) -> int:
         """Get the number of pages in the OCR response.
 
         Args:
@@ -389,20 +398,23 @@ class OCRProcessor:
         Returns:
             Number of pages processed.
         """
-        return len(response.pages) if hasattr(response, "pages") else 0
+        return len(response.pages)
 
-    def get_page_text(self, response: dict, page_index: int) -> str:
-        """Get text from a specific page.
+    def get_page_text(self, response: OCRResponse, page_index: int) -> str:
+        """Get text content from a specific page.
 
         Args:
             response: OCR response from Mistral API.
             page_index: Zero-based page index.
 
         Returns:
-            Markdown text from the specified page.
+            Text content of the specified page.
+
+        Raises:
+            IndexError: If page_index is out of range.
         """
-        if not hasattr(response, "pages") or page_index >= len(response.pages):
+        if page_index >= len(response.pages):
             raise IndexError(f"Page index {page_index} out of range")
 
         page = response.pages[page_index]
-        return page.markdown if hasattr(page, "markdown") else ""
+        return page.markdown if hasattr(page, "markdown") and page.markdown else ""

@@ -275,7 +275,7 @@ class OutputManager:
         Returns:
             Summary information about the outputs.
         """
-        summary = {
+        summary: dict[str, Any] = {
             "files_created": [],
             "total_size_bytes": 0,
             "images_count": 0,
