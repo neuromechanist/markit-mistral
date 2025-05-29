@@ -136,7 +136,7 @@ class TestCLIMain:
             temp_path = Path(temp_dir)
             input_file = temp_path / "test.pdf"
             input_file.touch()  # Create empty file
-            
+
             # Create actual output file that CLI can read
             output_file = temp_path / "output.md"
             output_file.write_text("# Test Output\n\nThis is test content.")
@@ -231,7 +231,7 @@ class TestCLIMain:
             temp_path = Path(temp_dir)
             input_file = temp_path / "test.pdf"
             input_file.touch()
-            
+
             # Create actual output file that CLI can read
             output_file = temp_path / "output.md"
             output_file.write_text("# Test Output\n\nThis is test content.")
@@ -261,7 +261,7 @@ class TestCLIMain:
             temp_path = Path(temp_dir)
             input_file = temp_path / "test.pdf"
             input_file.touch()
-            
+
             # Create actual output file that CLI can read
             output_file = temp_path / "output.md"
             output_file.write_text("# Test Output\n\nThis is test content.")
@@ -288,7 +288,7 @@ class TestCLIMain:
             temp_path = Path(temp_dir)
             input_file = temp_path / "test.pdf"
             input_file.touch()
-            
+
             # Create actual output file that CLI can read
             output_file = temp_path / "output.md"
             output_file.write_text("# Test Output\n\nThis is test content.")
@@ -316,7 +316,7 @@ class TestCLIMain:
             temp_path = Path(temp_dir)
             input_file = temp_path / "test.pdf"
             input_file.touch()
-            
+
             # Create actual output file that CLI can read
             output_file = temp_path / "output.md"
             output_file.write_text("# Test Output\n\nThis is test content.")
