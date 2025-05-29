@@ -1006,19 +1006,28 @@
                     // Update image references in markdown to point to images/ folder
                     // Look for various image reference patterns
                     const imagePatterns = [
-                        /!\[([^\]]*)\]\(([^)]+)\)/g,  // ![alt](image.png)
-                        /!\[([^\]]*)\]\s*:\s*([^\s]+)/g,  // ![alt]: image.png
-                        /<img[^>]+src=['"]([^'"]+)['"][^>]*>/g  // <img src="image.png">
+                        {
+                            pattern: /!\[([^\]]*)\]\(([^)]+)\)/g,  // ![alt](image.png)
+                            pathGroupIndex: 2,  // Path is in group 2 (parentheses)
+                            altGroupIndex: 1    // Alt text is in group 1 (brackets)
+                        },
+                        {
+                            pattern: /!\[([^\]]*)\]\s*:\s*([^\s]+)/g,  // ![alt]: image.png
+                            pathGroupIndex: 2,  // Path is in group 2 (after colon)
+                            altGroupIndex: 1    // Alt text is in group 1 (brackets)
+                        },
+                        {
+                            pattern: /<img[^>]+src=['"]([^'"]+)['"][^>]*>/g,  // <img src="image.png">
+                            pathGroupIndex: 1,  // Path is in group 1 (src attribute)
+                            altGroupIndex: null // No alt text group for img tags
+                        }
                     ];
                     
-                    imagePatterns.forEach(pattern => {
+                    imagePatterns.forEach(({ pattern, pathGroupIndex, altGroupIndex }) => {
                         pageMarkdown = pageMarkdown.replace(pattern, (match, ...groups) => {
-                            // Find the image path in the groups
-                            const imagePath = groups.find(group => 
-                                group && (group.includes('.png') || group.includes('.jpg') || group.includes('.jpeg'))
-                            );
+                            const imagePath = groups[pathGroupIndex - 1]; // -1 because groups array is 0-indexed
                             
-                            if (imagePath) {
+                            if (imagePath && (imagePath.includes('.png') || imagePath.includes('.jpg') || imagePath.includes('.jpeg') || imagePath.includes('.gif') || imagePath.includes('.bmp') || imagePath.includes('.webp'))) {
                                 // Check if we have a mapping for this image
                                 const correctedPath = imageMapping[imagePath] || 
                                                     imageMapping[imagePath.split('/').pop()] ||
