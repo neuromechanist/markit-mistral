@@ -13,10 +13,9 @@ import mimetypes
 import os
 import time
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from mistralai import Mistral, DocumentURLChunk, ImageURLChunk
-from mistralai.sdk.exceptions import SDKError
-from mistralai.types.ocr_response import OCRResponse
+from mistralai import DocumentURLChunk, ImageURLChunk, Mistral, SDKError
 
 from .exceptions import (
     APIError,
@@ -26,9 +25,11 @@ from .exceptions import (
     FileNotFoundError,
     FileTooLargeError,
     OCRProcessingError,
-    UnsupportedFileTypeError,
     handle_api_error,
 )
+
+if TYPE_CHECKING:
+    from mistralai.types.ocr_response import OCRResponse
 
 logger = logging.getLogger(__name__)
 

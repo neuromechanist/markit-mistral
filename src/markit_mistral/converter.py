@@ -10,8 +10,6 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from mistralai.types.ocr_response import OCRResponse
-
 from .config import Config
 from .file_processor import create_file_processor
 from .markdown_formatter import MarkdownFormatter

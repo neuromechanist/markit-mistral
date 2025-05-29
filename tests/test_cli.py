@@ -131,12 +131,16 @@ class TestCLIMain:
         mock_converter = Mock()
         mock_converter_class.return_value = mock_converter
         mock_converter.file_processor.is_supported.return_value = True
-        mock_converter.convert_file.return_value = Path("output.md")
 
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
             input_file = temp_path / "test.pdf"
             input_file.touch()  # Create empty file
+            
+            # Create actual output file that CLI can read
+            output_file = temp_path / "output.md"
+            output_file.write_text("# Test Output\n\nThis is test content.")
+            mock_converter.convert_file.return_value = output_file
 
             with patch("sys.argv", ["markit-mistral", str(input_file)]):
                 result = main()
@@ -222,12 +226,16 @@ class TestCLIMain:
         mock_converter = Mock()
         mock_converter_class.return_value = mock_converter
         mock_converter.file_processor.is_supported.return_value = True
-        mock_converter.convert_file.return_value = Path("output.md")
 
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
             input_file = temp_path / "test.pdf"
             input_file.touch()
+            
+            # Create actual output file that CLI can read
+            output_file = temp_path / "output.md"
+            output_file.write_text("# Test Output\n\nThis is test content.")
+            mock_converter.convert_file.return_value = output_file
 
             with (
                 patch("sys.argv", ["markit-mistral", str(input_file), "--verbose"]),
@@ -248,12 +256,16 @@ class TestCLIMain:
         mock_converter = Mock()
         mock_converter_class.return_value = mock_converter
         mock_converter.file_processor.is_supported.return_value = True
-        mock_converter.convert_file.return_value = Path("output.md")
 
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
             input_file = temp_path / "test.pdf"
             input_file.touch()
+            
+            # Create actual output file that CLI can read
+            output_file = temp_path / "output.md"
+            output_file.write_text("# Test Output\n\nThis is test content.")
+            mock_converter.convert_file.return_value = output_file
 
             with patch("sys.argv", ["markit-mistral", str(input_file), "--quiet"]):
                 result = main()
@@ -271,12 +283,16 @@ class TestCLIMain:
         mock_converter = Mock()
         mock_converter_class.return_value = mock_converter
         mock_converter.file_processor.is_supported.return_value = True
-        mock_converter.convert_file.return_value = Path("output.md")
 
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
             input_file = temp_path / "test.pdf"
             input_file.touch()
+            
+            # Create actual output file that CLI can read
+            output_file = temp_path / "output.md"
+            output_file.write_text("# Test Output\n\nThis is test content.")
+            mock_converter.convert_file.return_value = output_file
 
             with patch("sys.argv", ["markit-mistral", str(input_file), "--no-images"]):
                 result = main()
@@ -295,12 +311,16 @@ class TestCLIMain:
         mock_converter.output_manager = Mock()
         mock_converter_class.return_value = mock_converter
         mock_converter.file_processor.is_supported.return_value = True
-        mock_converter.convert_file.return_value = Path("output.md")
 
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
             input_file = temp_path / "test.pdf"
             input_file.touch()
+            
+            # Create actual output file that CLI can read
+            output_file = temp_path / "output.md"
+            output_file.write_text("# Test Output\n\nThis is test content.")
+            mock_converter.convert_file.return_value = output_file
 
             with patch(
                 "sys.argv",
