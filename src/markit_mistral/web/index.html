@@ -1033,7 +1033,19 @@
                                                     imageMapping[imagePath.split('/').pop()] ||
                                                     `images/${imagePath.split('/').pop()}`;
                                 
-                                return match.replace(imagePath, correctedPath);
+                                // Reconstruct the match with only the path part replaced
+                                if (pathGroupIndex === 2 && altGroupIndex === 1) {
+                                    // For ![alt](path) pattern
+                                    const altText = groups[0]; // altGroupIndex - 1
+                                    return `![${altText}](${correctedPath})`;
+                                } else if (pathGroupIndex === 2 && altGroupIndex === 1 && match.includes(':')) {
+                                    // For ![alt]: path pattern
+                                    const altText = groups[0]; // altGroupIndex - 1
+                                    return `![${altText}]: ${correctedPath}`;
+                                } else if (pathGroupIndex === 1 && altGroupIndex === null) {
+                                    // For <img src="path"> pattern
+                                    return match.replace(/src=['"][^'"]+['"]/, `src="${correctedPath}"`);
+                                }
                             }
                             return match;
                         });
