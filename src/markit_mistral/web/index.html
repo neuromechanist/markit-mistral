@@ -950,8 +950,8 @@
                 logger.log(`📊 Pages processed: ${result.pages?.length || 0}`, 'DEBUG');
                 
                 // Extract text and images
-                const markdown = extractTextFromResponse(result);
                 const images = includeImages ? extractImagesFromResponse(result, file.name) : [];
+                const markdown = extractTextFromResponse(result, images);
                 
                 return {
                     success: true,
@@ -981,18 +981,67 @@
             });
         }
 
-        // Extract text from Mistral API response
-        function extractTextFromResponse(response) {
+        // Extract text from Mistral API response and update image references
+        function extractTextFromResponse(response, extractedImages = []) {
             const textParts = [];
             const pages = response.pages || [];
             
+            // Create a mapping of image IDs to corrected paths
+            const imageMapping = {};
+            extractedImages.forEach(img => {
+                // Extract original image ID from the name if it exists
+                const originalId = img.name.replace(/.*_page_\d+_image_\d+\.png$/, '') || img.name;
+                imageMapping[img.name] = `images/${img.name}`;
+                // Also map potential shorter references
+                if (img.name.includes('_')) {
+                    const shortName = img.name.split('_').pop();
+                    imageMapping[shortName] = `images/${img.name}`;
+                }
+            });
+            
             for (const page of pages) {
                 if (page.markdown) {
-                    textParts.push(page.markdown);
+                    let pageMarkdown = page.markdown;
+                    
+                    // Update image references in markdown to point to images/ folder
+                    // Look for various image reference patterns
+                    const imagePatterns = [
+                        /!\[([^\]]*)\]\(([^)]+)\)/g,  // ![alt](image.png)
+                        /!\[([^\]]*)\]\s*:\s*([^\s]+)/g,  // ![alt]: image.png
+                        /<img[^>]+src=['"]([^'"]+)['"][^>]*>/g  // <img src="image.png">
+                    ];
+                    
+                    imagePatterns.forEach(pattern => {
+                        pageMarkdown = pageMarkdown.replace(pattern, (match, ...groups) => {
+                            // Find the image path in the groups
+                            const imagePath = groups.find(group => 
+                                group && (group.includes('.png') || group.includes('.jpg') || group.includes('.jpeg'))
+                            );
+                            
+                            if (imagePath) {
+                                // Check if we have a mapping for this image
+                                const correctedPath = imageMapping[imagePath] || 
+                                                    imageMapping[imagePath.split('/').pop()] ||
+                                                    `images/${imagePath.split('/').pop()}`;
+                                
+                                return match.replace(imagePath, correctedPath);
+                            }
+                            return match;
+                        });
+                    });
+                    
+                    textParts.push(pageMarkdown);
                 }
             }
             
-            return textParts.join('\n\n');
+            let finalMarkdown = textParts.join('\n\n');
+            
+            // Add a note about image organization if we have extracted images
+            if (extractedImages.length > 0) {
+                finalMarkdown += `\n\n---\n\n*Note: This document contains ${extractedImages.length} extracted image(s). In the ZIP download, images are organized in the \`images/\` folder for proper markdown reference.*`;
+            }
+            
+            return finalMarkdown;
         }
 
         // Extract images from Mistral API response
@@ -1012,7 +1061,16 @@
                             imageData = `data:image/png;base64,${imageData}`;
                         }
                         
-                        const imageName = image.id || `${filename}_page_${pageIdx + 1}_image_${imgIdx + 1}.png`;
+                        // Create consistent image naming
+                        let imageName;
+                        if (image.id) {
+                            // Use the ID provided by the API if available
+                            imageName = image.id.endsWith('.png') ? image.id : `${image.id}.png`;
+                        } else {
+                            // Generate consistent name: img-0.png, img-1.png, etc.
+                            const globalImgIndex = extractedImages.length;
+                            imageName = `img-${globalImgIndex}.png`;
+                        }
                         
                         extractedImages.push({
                             name: imageName,
