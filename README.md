@@ -20,7 +20,7 @@ A powerful PDF and image to markdown converter using Mistral AI OCR with advance
 
 For a user-friendly, browser-based experience:
 
-1. Open `src/markit_mistral/web/index.html` in your browser
+1. Open `docs/index.html` in your browser
 2. Enter your Mistral API key
 3. Drag and drop files or click to upload
 4. Download the generated markdown and images
