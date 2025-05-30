@@ -44,7 +44,7 @@ For automated workflows and integration:
 - Python 3.10 or higher
 - Mistral AI API key
 
-### Install from PyPI
+### Install from PyPI (coming soon)
 
 ```bash
 pip install markit-mistral
