@@ -205,12 +205,12 @@ $$F = ma$$
         # E_{-1} should NOT become E_{ - 1}
         content = "$E_{-1}$"
         result = formatter._enhance_math_formatting(content)
-        assert "$E_{-1}$" == result
+        assert result == "$E_{-1}$"
 
         # x^{2+3} should NOT add spaces inside braces
         content = "$x^{2+3}$"
         result = formatter._enhance_math_formatting(content)
-        assert "$x^{2+3}$" == result
+        assert result == "$x^{2+3}$"
 
     def test_enhance_math_adds_spaces_at_top_level(self):
         """Test that math enhancement adds spaces at top level."""
@@ -218,7 +218,7 @@ $$F = ma$$
 
         content = "$a+b=c$"
         result = formatter._enhance_math_formatting(content)
-        assert "$a + b = c$" == result
+        assert result == "$a + b = c$"
 
 
 class TestTitleExtraction:
