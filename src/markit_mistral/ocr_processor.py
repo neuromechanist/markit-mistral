@@ -33,6 +33,32 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+# Mapping of MIME subtypes to file extensions
+_MIME_TO_EXT: dict[str, str] = {
+    "jpeg": ".jpg",
+    "png": ".png",
+    "gif": ".gif",
+    "bmp": ".bmp",
+    "tiff": ".tiff",
+    "webp": ".webp",
+    "svg+xml": ".svg",
+}
+
+
+def _ext_from_data_uri_header(header: str) -> str:
+    """Extract file extension from a data URI header like 'data:image/png;base64'.
+
+    Returns '.jpg' as fallback if the MIME type cannot be determined.
+    """
+    try:
+        # header format: "data:image/png;base64"
+        mime_part = header.split(";")[0]  # "data:image/png"
+        mime_type = mime_part.split(":", 1)[1]  # "image/png"
+        subtype = mime_type.split("/", 1)[1]  # "png"
+        return _MIME_TO_EXT.get(subtype, f".{subtype}")
+    except (IndexError, ValueError):
+        return ".jpg"
+
 
 class OCRProcessor:
     """
@@ -329,13 +355,19 @@ class OCRProcessor:
         return "\n\n".join(text_parts)
 
     def extract_images(
-        self, response: OCRResponse, output_dir: str | Path
+        self,
+        response: OCRResponse,
+        output_dir: str | Path,
+        image_prefix: str | None = None,
     ) -> list[Path]:
         """Extract and save images from OCR response.
 
         Args:
             response: OCR response from Mistral API.
             output_dir: Directory to save extracted images.
+            image_prefix: Optional prefix for image filenames (e.g., a title slug).
+                If provided, images are named '{prefix}-fig-{N}.{ext}'.
+                If None, images are named 'page_{N}_image_{M}.{ext}'.
 
         Returns:
             List of paths to saved image files.
@@ -368,17 +400,24 @@ class OCRProcessor:
                     if hasattr(image, "image_base64") and image.image_base64:
                         try:
                             # Parse the base64 data URI
+                            ext = ".jpg"  # default
                             if image.image_base64.startswith("data:"):
                                 header, data = image.image_base64.split(",", 1)
                                 image_data = base64.b64decode(data)
+                                # Extract extension from MIME type
+                                ext = _ext_from_data_uri_header(header)
                             else:
                                 image_data = base64.b64decode(image.image_base64)
 
                             # Use the image ID as filename, or generate one
                             if hasattr(image, "id") and image.id:
                                 filename = image.id
+                            elif image_prefix:
+                                filename = (
+                                    f"{image_prefix}-fig-{len(saved_images) + 1}{ext}"
+                                )
                             else:
-                                filename = f"page_{page_idx + 1}_image_{len(saved_images) + 1}.jpg"
+                                filename = f"page_{page_idx + 1}_image_{len(saved_images) + 1}{ext}"
 
                             image_path = output_dir / filename
 

@@ -31,8 +31,7 @@ Examples:
   markit-mistral document.pdf --base64-images       # Embed images as base64
   markit-mistral document.pdf --no-images           # Skip image processing
 
-  # Progress and output control
-  markit-mistral large_document.pdf --progress      # Show progress bar
+  # Output control
   markit-mistral document.pdf --quiet               # Silent mode
   markit-mistral document.pdf --verbose             # Detailed output
 
@@ -96,18 +95,6 @@ Examples:
     )
 
     parser.add_argument(
-        "--progress",
-        action="store_true",
-        help="show progress bars for long operations (default: auto-detect TTY)",
-    )
-
-    parser.add_argument(
-        "--batch",
-        action="store_true",
-        help="enable batch processing mode for multiple files",
-    )
-
-    parser.add_argument(
         "--save-metadata",
         action="store_true",
         default=True,
@@ -162,13 +149,6 @@ def main() -> int:
             config.log_level = "DEBUG"
         if args.quiet:
             config.log_level = "ERROR"
-
-        # Configure progress bars (default to auto-detect TTY unless specified)
-        show_progress = (
-            args.progress if hasattr(args, "progress") else sys.stdout.isatty()
-        )
-        if args.quiet:
-            show_progress = False
 
         # Setup logging
         config.setup_logging()
