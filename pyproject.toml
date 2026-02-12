@@ -33,7 +33,6 @@ dependencies = [
     "Pillow>=10.0.0",
     "PyPDF2>=3.0.0",
     "requests>=2.31.0",
-    "click>=8.0.0",
     "python-magic>=0.4.27",
     "typing-extensions>=4.0.0",
 ]
@@ -134,10 +133,7 @@ disallow_incomplete_defs = true
 check_untyped_defs = true
 disallow_untyped_decorators = true
 
-# Exclude web interface PyScript files from mypy checking
-exclude = [
-    "src/markit_mistral/web/",
-]
+exclude = []
 
 [[tool.mypy.overrides]]
 module = [

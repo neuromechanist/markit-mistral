@@ -12,7 +12,11 @@ from pathlib import Path
 
 from .config import Config
 from .file_processor import create_file_processor
-from .markdown_formatter import MarkdownFormatter
+from .markdown_formatter import (
+    MarkdownFormatter,
+    extract_title_from_markdown,
+    title_to_slug,
+)
 from .ocr_processor import OCRProcessor
 from .output_manager import OutputManager
 
@@ -138,21 +142,28 @@ class MarkItMistral:
         else:
             raise ValueError(f"Unsupported file type: {input_path.suffix}")
 
+        # Derive title slug for image naming
+        ocr_title = extract_title_from_markdown(response.pages)
+        image_prefix = title_to_slug(ocr_title) if ocr_title else output_path.stem
+
         # Extract and save images if requested
         image_paths: list[Path] = []
         if self.config.include_images:
             # Create images subdirectory if needed
             if not self.config.base64_images:
                 images_dir = output_dir / f"{output_path.stem}_images"
-                images_dir.mkdir(exist_ok=True)
             else:
                 images_dir = output_dir
 
-            image_paths = self.ocr_processor.extract_images(response, images_dir)
+            image_paths = self.ocr_processor.extract_images(
+                response, images_dir, image_prefix=image_prefix
+            )
             logger.info(f"Extracted {len(image_paths)} images")
 
         # Generate markdown content using the formatter
-        document_title = input_path.stem.replace("_", " ").replace("-", " ").title()
+        document_title = (
+            ocr_title or input_path.stem.replace("_", " ").replace("-", " ").title()
+        )
         markdown_content = self.markdown_formatter.format_document(
             pages=response.pages,
             image_paths=image_paths,
@@ -164,7 +175,7 @@ class MarkItMistral:
         with open(output_path, "w", encoding="utf-8") as f:
             f.write(markdown_content)
 
-        # Extract and log metadata
+        # Extract and log metadata, save to JSON
         metadata = self.markdown_formatter.extract_metadata(markdown_content)
         images_count = (
             len(metadata["images"]) if isinstance(metadata["images"], list) else 0
@@ -176,8 +187,36 @@ class MarkItMistral:
             f"{metadata['tables']} tables"
         )
 
+        # Save metadata JSON
+        metadata_path = output_dir / f"{output_path.stem}_metadata.json"
+        self.output_manager.save_metadata(
+            metadata_path=metadata_path,
+            conversion_metadata=metadata,
+            input_info=file_info,
+        )
+
         logger.info(f"Successfully converted to {output_path}")
         return output_path
+
+    def convert(self, input_path: str | Path) -> str:
+        """Convert a PDF or image file to markdown and return the text.
+
+        This is a convenience wrapper around convert_file() that returns
+        the markdown content as a string instead of writing to a file.
+
+        Args:
+            input_path: Path to the input file (PDF or image).
+
+        Returns:
+            The markdown text as a string.
+        """
+        import tempfile
+
+        input_path = Path(input_path)
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            output_path = Path(tmp_dir) / f"{input_path.stem}.md"
+            self.convert_file(input_path, output_path=output_path, output_dir=tmp_dir)
+            return output_path.read_text(encoding="utf-8")
 
     def convert_url(
         self,
@@ -208,21 +247,28 @@ class MarkItMistral:
         # Process the URL
         response = self.ocr_processor.process_url(url, self.config.include_images)
 
+        # Derive title slug for image naming
+        ocr_title = extract_title_from_markdown(response.pages)
+        image_prefix = title_to_slug(ocr_title) if ocr_title else output_path.stem
+
         # Extract and save images if requested
         image_paths: list[Path] = []
         if self.config.include_images:
             # Create images subdirectory if needed
             if not self.config.base64_images:
                 images_dir = output_dir / f"{output_path.stem}_images"
-                images_dir.mkdir(exist_ok=True)
             else:
                 images_dir = output_dir
 
-            image_paths = self.ocr_processor.extract_images(response, images_dir)
+            image_paths = self.ocr_processor.extract_images(
+                response, images_dir, image_prefix=image_prefix
+            )
             logger.info(f"Extracted {len(image_paths)} images")
 
         # Generate markdown content using the formatter
-        document_title = output_path.stem.replace("_", " ").replace("-", " ").title()
+        document_title = (
+            ocr_title or output_path.stem.replace("_", " ").replace("-", " ").title()
+        )
         markdown_content = self.markdown_formatter.format_document(
             pages=response.pages,
             image_paths=image_paths,

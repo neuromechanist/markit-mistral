@@ -2,9 +2,48 @@
 
 import logging
 import re
+import unicodedata
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
+
+_MAX_SLUG_LENGTH = 50
+
+
+def extract_title_from_markdown(pages: list) -> str | None:
+    """Extract the document title from the first heading in OCR pages.
+
+    Looks for the first '# ' heading across all pages.
+    Returns None if no heading is found.
+    """
+    for page in pages:
+        if hasattr(page, "markdown") and page.markdown:
+            match = re.search(r"^#\s+(.+)$", page.markdown, re.MULTILINE)
+            if match:
+                return match.group(1).strip()
+    return None
+
+
+def title_to_slug(title: str) -> str:
+    """Convert a title string to a filesystem-safe slug.
+
+    Lowercase, hyphens for spaces, strip special chars, truncate to 50 chars.
+    """
+    # Normalize unicode
+    slug = unicodedata.normalize("NFKD", title).encode("ascii", "ignore").decode()
+    slug = slug.lower()
+    # Replace whitespace and underscores with hyphens
+    slug = re.sub(r"[\s_]+", "-", slug)
+    # Strip non-alphanumeric (keep hyphens)
+    slug = re.sub(r"[^a-z0-9-]", "", slug)
+    # Collapse multiple hyphens
+    slug = re.sub(r"-{2,}", "-", slug)
+    # Strip leading/trailing hyphens
+    slug = slug.strip("-")
+    # Truncate
+    if len(slug) > _MAX_SLUG_LENGTH:
+        slug = slug[:_MAX_SLUG_LENGTH].rstrip("-")
+    return slug or "document"
 
 
 class MarkdownFormatter:
@@ -204,14 +243,40 @@ class MarkdownFormatter:
             Content with enhanced math formatting.
         """
 
-        # Add proper spacing around operators in inline math
+        # Add proper spacing around operators in inline math,
+        # but only at the top level (not inside braces like subscripts/superscripts).
         def enhance_inline_math(match: re.Match[str]) -> str:
             math_content = match.group(1)
-            # Add spaces around key operators
-            math_content = re.sub(
-                r"([a-zA-Z0-9])([\+\-\=])([a-zA-Z0-9])", r"\1 \2 \3", math_content
-            )
-            return f"${math_content}$"
+            # Only add spaces around operators that are NOT inside braces
+            result = []
+            brace_depth = 0
+            i = 0
+            while i < len(math_content):
+                ch = math_content[i]
+                if ch == "{":
+                    brace_depth += 1
+                elif ch == "}":
+                    brace_depth = max(0, brace_depth - 1)
+
+                if (
+                    brace_depth == 0
+                    and ch in "+-="
+                    and i > 0
+                    and i < len(math_content) - 1
+                ):
+                    prev = math_content[i - 1]
+                    nxt = math_content[i + 1]
+                    if prev.isalnum() and nxt.isalnum():
+                        # Add spaces around operator
+                        if result and result[-1] != " ":
+                            result.append(" ")
+                        result.append(ch)
+                        result.append(" ")
+                        i += 1
+                        continue
+                result.append(ch)
+                i += 1
+            return f"${''.join(result)}$"
 
         content = re.sub(r"\$([^$]+)\$", enhance_inline_math, content)
 

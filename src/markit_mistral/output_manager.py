@@ -12,6 +12,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from . import __version__
+
 logger = logging.getLogger(__name__)
 
 
@@ -146,7 +148,7 @@ class OutputManager:
             "conversion_info": {
                 "timestamp": datetime.now().isoformat(),
                 "tool": "markit-mistral",
-                "version": "0.1.0",  # TODO: Get from package
+                "version": __version__,
             },
             "input_file": input_info,
             "content_metadata": conversion_metadata,

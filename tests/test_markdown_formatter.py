@@ -4,7 +4,11 @@ import tempfile
 from pathlib import Path
 from unittest.mock import Mock
 
-from markit_mistral.markdown_formatter import MarkdownFormatter
+from markit_mistral.markdown_formatter import (
+    MarkdownFormatter,
+    extract_title_from_markdown,
+    title_to_slug,
+)
 
 
 class TestMarkdownFormatter:
@@ -193,3 +197,82 @@ $$F = ma$$
         # Should have proper spacing after headers and code blocks
         assert "\n\n" in result
         assert result.endswith("\n")  # Should end with newline
+
+    def test_enhance_math_preserves_subscripts(self):
+        """Test that math enhancement does not corrupt subscripts."""
+        formatter = MarkdownFormatter()
+
+        # E_{-1} should NOT become E_{ - 1}
+        content = "$E_{-1}$"
+        result = formatter._enhance_math_formatting(content)
+        assert "$E_{-1}$" == result
+
+        # x^{2+3} should NOT add spaces inside braces
+        content = "$x^{2+3}$"
+        result = formatter._enhance_math_formatting(content)
+        assert "$x^{2+3}$" == result
+
+    def test_enhance_math_adds_spaces_at_top_level(self):
+        """Test that math enhancement adds spaces at top level."""
+        formatter = MarkdownFormatter()
+
+        content = "$a+b=c$"
+        result = formatter._enhance_math_formatting(content)
+        assert "$a + b = c$" == result
+
+
+class TestTitleExtraction:
+    """Test title extraction from markdown pages."""
+
+    def test_extract_title_from_first_heading(self):
+        page = Mock()
+        page.markdown = "# Treatment of Alzheimer's Disease\n\nSome content."
+        assert extract_title_from_markdown([page]) == "Treatment of Alzheimer's Disease"
+
+    def test_extract_title_no_heading(self):
+        page = Mock()
+        page.markdown = "No heading here, just text."
+        assert extract_title_from_markdown([page]) is None
+
+    def test_extract_title_empty_pages(self):
+        assert extract_title_from_markdown([]) is None
+
+    def test_extract_title_skips_h2(self):
+        page = Mock()
+        page.markdown = "## This is H2\n\nContent."
+        assert extract_title_from_markdown([page]) is None
+
+    def test_extract_title_from_second_page(self):
+        page1 = Mock()
+        page1.markdown = "Just a paragraph."
+        page2 = Mock()
+        page2.markdown = "# Title on Page Two\n\nContent."
+        assert extract_title_from_markdown([page1, page2]) == "Title on Page Two"
+
+
+class TestTitleToSlug:
+    """Test slug generation from titles."""
+
+    def test_basic_slug(self):
+        assert title_to_slug("Treatment of Alzheimer's Disease") == "treatment-of-alzheimers-disease"
+
+    def test_special_characters(self):
+        assert title_to_slug("E = mc^2: A Famous Equation!") == "e-mc2-a-famous-equation"
+
+    def test_unicode(self):
+        slug = title_to_slug("Uber die Quantenmechanik")
+        assert slug == "uber-die-quantenmechanik"
+
+    def test_truncation(self):
+        long_title = "A" * 100
+        slug = title_to_slug(long_title)
+        assert len(slug) <= 50
+
+    def test_empty_title(self):
+        assert title_to_slug("") == "document"
+
+    def test_only_special_chars(self):
+        assert title_to_slug("!!!@@@###") == "document"
+
+    def test_collapses_hyphens(self):
+        assert title_to_slug("word   --  another") == "word-another"

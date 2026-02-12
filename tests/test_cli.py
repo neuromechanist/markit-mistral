@@ -102,19 +102,12 @@ class TestCLIParser:
 
         assert args.api_key == "test-key"
 
-    def test_progress_argument(self):
-        """Test progress argument."""
+    def test_no_metadata_argument(self):
+        """Test no-metadata argument."""
         parser = create_parser()
-        args = parser.parse_args(["input.pdf", "--progress"])
+        args = parser.parse_args(["input.pdf", "--no-metadata"])
 
-        assert args.progress is True
-
-    def test_batch_argument(self):
-        """Test batch argument."""
-        parser = create_parser()
-        args = parser.parse_args(["input.pdf", "--batch"])
-
-        assert args.batch is True
+        assert args.no_metadata is True
 
 
 class TestCLIMain:
