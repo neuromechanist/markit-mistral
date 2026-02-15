@@ -409,17 +409,17 @@ class OCRProcessor:
                             else:
                                 image_data = base64.b64decode(image.image_base64)
 
-                            # Use the image ID as filename, or generate one
-                            if hasattr(image, "id") and image.id:
+                            # Build filename: prefix takes priority for unique naming
+                            if image_prefix:
+                                filename = (
+                                    f"{image_prefix}-fig-{len(saved_images) + 1}{ext}"
+                                )
+                            elif hasattr(image, "id") and image.id:
                                 filename = image.id
                                 # Ensure filename has a recognized image extension
                                 _known_exts = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp", ".svg"}
                                 if not any(filename.lower().endswith(e) for e in _known_exts):
                                     filename = f"{filename}{ext}"
-                            elif image_prefix:
-                                filename = (
-                                    f"{image_prefix}-fig-{len(saved_images) + 1}{ext}"
-                                )
                             else:
                                 filename = f"page_{page_idx + 1}_image_{len(saved_images) + 1}{ext}"
 
