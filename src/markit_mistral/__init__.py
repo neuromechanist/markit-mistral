@@ -5,7 +5,7 @@ A powerful tool for converting PDF documents and images to markdown format
 with advanced math equation support and image extraction capabilities.
 """
 
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 __author__ = "Seyed Yahya Shirazi"
 __email__ = "shirazi@ieee.org"
 __description__ = "PDF and image to markdown converter using Mistral AI OCR"

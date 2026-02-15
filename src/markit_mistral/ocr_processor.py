@@ -359,7 +359,7 @@ class OCRProcessor:
         response: OCRResponse,
         output_dir: str | Path,
         image_prefix: str | None = None,
-    ) -> list[Path]:
+    ) -> tuple[list[Path], dict[str, str]]:
         """Extract and save images from OCR response.
 
         Args:
@@ -370,10 +370,12 @@ class OCRProcessor:
                 If None, images are named 'page_{N}_image_{M}.{ext}'.
 
         Returns:
-            List of paths to saved image files.
+            Tuple of (list of saved image paths, rename map from original ID
+            to new filename for updating markdown references).
         """
         output_dir = Path(output_dir)
         saved_images: list[Path] = []
+        rename_map: dict[str, str] = {}
 
         # First, check if there are any images to extract
         has_images = False
@@ -389,7 +391,7 @@ class OCRProcessor:
         # Only create directory if we have images to save
         if not has_images:
             logger.debug("No images found in OCR response")
-            return saved_images
+            return saved_images, rename_map
 
         # Create output directory only when needed
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -409,19 +411,26 @@ class OCRProcessor:
                             else:
                                 image_data = base64.b64decode(image.image_base64)
 
+                            # Get original ID for rename mapping
+                            original_id = getattr(image, "id", None) or ""
+
                             # Build filename: prefix takes priority for unique naming
                             if image_prefix:
                                 filename = (
                                     f"{image_prefix}-fig-{len(saved_images) + 1}{ext}"
                                 )
-                            elif hasattr(image, "id") and image.id:
-                                filename = image.id
+                            elif original_id:
+                                filename = original_id
                                 # Ensure filename has a recognized image extension
                                 _known_exts = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp", ".svg"}
                                 if not any(filename.lower().endswith(e) for e in _known_exts):
                                     filename = f"{filename}{ext}"
                             else:
                                 filename = f"page_{page_idx + 1}_image_{len(saved_images) + 1}{ext}"
+
+                            # Track rename if filename differs from original
+                            if original_id and original_id != filename:
+                                rename_map[original_id] = filename
 
                             image_path = output_dir / filename
 
@@ -437,7 +446,7 @@ class OCRProcessor:
                             )
 
         logger.info(f"Extracted {len(saved_images)} images to {output_dir}")
-        return saved_images
+        return saved_images, rename_map
 
     def get_page_count(self, response: OCRResponse) -> int:
         """Get the number of pages in the OCR response.

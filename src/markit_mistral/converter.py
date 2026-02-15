@@ -148,6 +148,7 @@ class MarkItMistral:
 
         # Extract and save images if requested
         image_paths: list[Path] = []
+        rename_map: dict[str, str] = {}
         if self.config.include_images:
             # Create images subdirectory if needed
             if not self.config.base64_images:
@@ -155,7 +156,7 @@ class MarkItMistral:
             else:
                 images_dir = output_dir
 
-            image_paths = self.ocr_processor.extract_images(
+            image_paths, rename_map = self.ocr_processor.extract_images(
                 response, images_dir, image_prefix=image_prefix
             )
             logger.info(f"Extracted {len(image_paths)} images")
@@ -169,6 +170,7 @@ class MarkItMistral:
             image_paths=image_paths,
             output_dir=output_dir,
             document_title=document_title,
+            rename_map=rename_map,
         )
 
         # Write markdown file
@@ -253,6 +255,7 @@ class MarkItMistral:
 
         # Extract and save images if requested
         image_paths: list[Path] = []
+        rename_map: dict[str, str] = {}
         if self.config.include_images:
             # Create images subdirectory if needed
             if not self.config.base64_images:
@@ -260,7 +263,7 @@ class MarkItMistral:
             else:
                 images_dir = output_dir
 
-            image_paths = self.ocr_processor.extract_images(
+            image_paths, rename_map = self.ocr_processor.extract_images(
                 response, images_dir, image_prefix=image_prefix
             )
             logger.info(f"Extracted {len(image_paths)} images")
@@ -274,6 +277,7 @@ class MarkItMistral:
             image_paths=image_paths,
             output_dir=output_dir,
             document_title=document_title,
+            rename_map=rename_map,
         )
 
         # Write markdown file

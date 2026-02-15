@@ -65,6 +65,7 @@ class MarkdownFormatter:
         image_paths: list[Path],
         output_dir: Path,
         document_title: str | None = None,
+        rename_map: dict[str, str] | None = None,
     ) -> str:
         """Format a complete document from OCR pages.
 
@@ -73,6 +74,8 @@ class MarkdownFormatter:
             image_paths: List of extracted image file paths.
             output_dir: Output directory for relative path calculation.
             document_title: Optional document title to include.
+            rename_map: Optional mapping of original image IDs to new filenames,
+                used to update markdown references when images are renamed.
 
         Returns:
             Formatted markdown content.
@@ -84,7 +87,7 @@ class MarkdownFormatter:
             markdown_parts.append(f"# {document_title}\n")
 
         # Create image mapping for reference replacement
-        image_map = self._create_image_map(image_paths, output_dir)
+        image_map = self._create_image_map(image_paths, output_dir, rename_map)
 
         # Process each page
         for page_idx, page in enumerate(pages):
@@ -114,18 +117,25 @@ class MarkdownFormatter:
         return content
 
     def _create_image_map(
-        self, image_paths: list[Path], output_dir: Path
+        self,
+        image_paths: list[Path],
+        output_dir: Path,
+        rename_map: dict[str, str] | None = None,
     ) -> dict[str, str]:
         """Create a mapping of image filenames to their appropriate references.
 
         Args:
             image_paths: List of image file paths.
             output_dir: Output directory for relative path calculation.
+            rename_map: Optional mapping of original image IDs to new filenames.
 
         Returns:
-            Dictionary mapping image filenames to markdown references.
+            Dictionary mapping image filenames (including original IDs) to
+            markdown references.
         """
         image_map = {}
+        # Build reverse lookup: new_filename -> original_id
+        reverse_rename = {v: k for k, v in (rename_map or {}).items()}
 
         for img_path in image_paths:
             if self.base64_images:
@@ -146,16 +156,24 @@ class MarkdownFormatter:
                     base64_str = base64.b64encode(img_data).decode("utf-8")
                     data_uri = f"data:{mime_type};base64,{base64_str}"
                     image_map[img_path.name] = data_uri
+                    # Also map original ID so markdown refs get updated
+                    if img_path.name in reverse_rename:
+                        image_map[reverse_rename[img_path.name]] = data_uri
 
                 except Exception as e:
                     logger.warning(f"Failed to encode image {img_path} as base64: {e}")
                     # Fallback to file path
                     rel_path = img_path.relative_to(output_dir)
                     image_map[img_path.name] = str(rel_path)
+                    if img_path.name in reverse_rename:
+                        image_map[reverse_rename[img_path.name]] = str(rel_path)
             else:
                 # Use relative file path
                 rel_path = img_path.relative_to(output_dir)
                 image_map[img_path.name] = str(rel_path)
+                # Also map original ID so markdown refs get updated
+                if img_path.name in reverse_rename:
+                    image_map[reverse_rename[img_path.name]] = str(rel_path)
 
         return image_map
 
