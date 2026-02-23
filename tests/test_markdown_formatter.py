@@ -6,6 +6,7 @@ from unittest.mock import Mock
 
 from markit_mistral.markdown_formatter import (
     MarkdownFormatter,
+    _is_trivial_heading,
     extract_title_from_markdown,
     title_to_slug,
 )
@@ -237,10 +238,10 @@ class TestTitleExtraction:
     def test_extract_title_empty_pages(self):
         assert extract_title_from_markdown([]) is None
 
-    def test_extract_title_skips_h2(self):
+    def test_extract_title_falls_back_to_h2(self):
         page = Mock()
-        page.markdown = "## This is H2\n\nContent."
-        assert extract_title_from_markdown([page]) is None
+        page.markdown = "## Detailed Methods Section\n\nContent."
+        assert extract_title_from_markdown([page]) == "Detailed Methods Section"
 
     def test_extract_title_from_second_page(self):
         page1 = Mock()
@@ -248,6 +249,61 @@ class TestTitleExtraction:
         page2 = Mock()
         page2.markdown = "# Title on Page Two\n\nContent."
         assert extract_title_from_markdown([page1, page2]) == "Title on Page Two"
+
+    def test_extract_title_skips_introduction(self):
+        page = Mock()
+        page.markdown = "# Introduction\n\n## Neural Network Architecture\n\nContent."
+        assert extract_title_from_markdown([page]) == "Neural Network Architecture"
+
+    def test_extract_title_skips_abstract(self):
+        page = Mock()
+        page.markdown = "# Abstract\n\nSome abstract text."
+        assert extract_title_from_markdown([page]) is None
+
+    def test_extract_title_skips_numbered_introduction(self):
+        page = Mock()
+        page.markdown = "# 1. Introduction\n\n## Real Title Here\n\nContent."
+        assert extract_title_from_markdown([page]) == "Real Title Here"
+
+    def test_extract_title_prefers_h1_over_h2(self):
+        page = Mock()
+        page.markdown = "## Sub heading\n\n# Main Title\n\nContent."
+        assert extract_title_from_markdown([page]) == "Main Title"
+
+    def test_extract_title_only_trivial_headings_returns_none(self):
+        page = Mock()
+        page.markdown = "# Introduction\n\n## Abstract\n\n## References\n\nContent."
+        assert extract_title_from_markdown([page]) is None
+
+
+class TestIsTrivialHeading:
+    """Test trivial heading detection."""
+
+    def test_introduction_is_trivial(self):
+        assert _is_trivial_heading("Introduction") is True
+
+    def test_abstract_is_trivial(self):
+        assert _is_trivial_heading("Abstract") is True
+
+    def test_numbered_introduction_is_trivial(self):
+        assert _is_trivial_heading("1. Introduction") is True
+
+    def test_roman_numeral_abstract_is_trivial(self):
+        assert _is_trivial_heading("I. Abstract") is True
+
+    def test_real_title_is_not_trivial(self):
+        assert _is_trivial_heading("Treatment of Alzheimer's Disease") is False
+
+    def test_case_insensitive(self):
+        assert _is_trivial_heading("INTRODUCTION") is True
+        assert _is_trivial_heading("table of contents") is True
+
+    def test_references_is_trivial(self):
+        assert _is_trivial_heading("References") is True
+
+    def test_acknowledgements_is_trivial(self):
+        assert _is_trivial_heading("Acknowledgements") is True
+        assert _is_trivial_heading("Acknowledgments") is True
 
 
 class TestTitleToSlug:
