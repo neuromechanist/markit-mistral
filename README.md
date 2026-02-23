@@ -118,7 +118,7 @@ cat document.pdf | markit-mistral > output.md
 
 ```
 usage: markit-mistral [-h] [-v] [-o OUTPUT] [--api-key API_KEY]
-                      [--extract-images] [--base64-images] 
+                      [--extract-images] [--base64-images]
                       [--preserve-math] [--verbose] [--quiet]
                       [input]
 
@@ -261,4 +261,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Note**: This project is in active development. Some features may be experimental. 
+**Note**: This project is in active development. Some features may be experimental.
