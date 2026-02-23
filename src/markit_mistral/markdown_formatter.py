@@ -135,7 +135,7 @@ class MarkdownFormatter:
         # Process each page
         for page_idx, page in enumerate(pages):
             if hasattr(page, "markdown") and page.markdown:
-                page_content = page.markdown
+                page_content = str(page.markdown)
 
                 # Process math equations if enabled
                 if self.preserve_math:

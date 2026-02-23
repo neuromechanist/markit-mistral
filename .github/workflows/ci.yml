@@ -31,9 +31,9 @@ jobs:
         ruff check src/ tests/
         ruff format --check src/ tests/
     
-    - name: Type check with mypy
+    - name: Type check with ty
       run: |
-        mypy src/markit_mistral/
+        ty check src/markit_mistral/
     
     - name: Test with pytest
       run: |
