@@ -254,10 +254,15 @@ class TestTitleToSlug:
     """Test slug generation from titles."""
 
     def test_basic_slug(self):
-        assert title_to_slug("Treatment of Alzheimer's Disease") == "treatment-of-alzheimers-disease"
+        assert (
+            title_to_slug("Treatment of Alzheimer's Disease")
+            == "treatment-of-alzheimers-disease"
+        )
 
     def test_special_characters(self):
-        assert title_to_slug("E = mc^2: A Famous Equation!") == "e-mc2-a-famous-equation"
+        assert (
+            title_to_slug("E = mc^2: A Famous Equation!") == "e-mc2-a-famous-equation"
+        )
 
     def test_unicode(self):
         slug = title_to_slug("Uber die Quantenmechanik")
