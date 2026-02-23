@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v5.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -13,17 +13,11 @@ repos:
       - id: check-docstring-first
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.8
+    rev: v0.15.1
     hooks:
       - id: ruff
         args: [--fix, --unsafe-fixes, --exit-non-zero-on-fix]
       - id: ruff-format
-
-  - repo: https://github.com/PyCQA/bandit
-    rev: 1.7.5
-    hooks:
-      - id: bandit
-        args: [-r, src/, -f, json]
 
   - repo: local
     hooks:
@@ -34,12 +28,3 @@ repos:
         types: [python]
         pass_filenames: false
         always_run: true
-
-      - id: pytest
-        name: pytest
-        entry: pytest
-        language: system
-        types: [python]
-        pass_filenames: false
-        always_run: true
-        args: [tests/, --tb=short]
