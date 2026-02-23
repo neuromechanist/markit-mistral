@@ -7,6 +7,7 @@ of PDF and image files to markdown using Mistral AI OCR.
 
 from __future__ import annotations
 
+import hashlib
 import logging
 from pathlib import Path
 
@@ -21,6 +22,54 @@ from .ocr_processor import OCRProcessor
 from .output_manager import OutputManager
 
 logger = logging.getLogger(__name__)
+
+
+def _content_hash(path: Path, length: int = 6) -> str:
+    """Return a short hex digest of a file's contents for uniqueness."""
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(8192), b""):
+            h.update(chunk)
+    return h.hexdigest()[:length]
+
+
+def generate_image_prefix(
+    pages: list,
+    input_path: Path,
+    output_path: Path,
+) -> str:
+    """Build a robust, collision-resistant image filename prefix.
+
+    Fallback order:
+    1. First non-trivial heading from OCR (H1, then H2)
+    2. Input filename stem (if not too generic)
+    3. Output filename stem
+
+    A short content hash is always appended to prevent collisions
+    between documents that happen to share the same title or filename.
+    """
+    slug = None
+
+    # Layer 1: meaningful heading from OCR content
+    ocr_title = extract_title_from_markdown(pages)
+    if ocr_title:
+        slug = title_to_slug(ocr_title)
+
+    # Layer 2: input filename (if it looks meaningful)
+    if slug is None or slug == "document":
+        stem = input_path.stem
+        # Reject very generic stems
+        generic_stems = {"input", "document", "file", "temp", "tmp", "output", "scan"}
+        if stem.lower() not in generic_stems:
+            slug = title_to_slug(stem)
+
+    # Layer 3: output filename
+    if slug is None or slug == "document":
+        slug = title_to_slug(output_path.stem)
+
+    # Guarantee uniqueness with a content hash suffix
+    short_hash = _content_hash(input_path)
+    return f"{slug}-{short_hash}"
 
 
 class MarkItMistral:
@@ -142,9 +191,8 @@ class MarkItMistral:
         else:
             raise ValueError(f"Unsupported file type: {input_path.suffix}")
 
-        # Derive title slug for image naming
-        ocr_title = extract_title_from_markdown(response.pages)
-        image_prefix = title_to_slug(ocr_title) if ocr_title else output_path.stem
+        # Derive image prefix with robust fallback chain + content hash
+        image_prefix = generate_image_prefix(response.pages, input_path, output_path)
 
         # Extract and save images if requested
         image_paths: list[Path] = []
@@ -162,6 +210,7 @@ class MarkItMistral:
             logger.info(f"Extracted {len(image_paths)} images")
 
         # Generate markdown content using the formatter
+        ocr_title = extract_title_from_markdown(response.pages)
         document_title = (
             ocr_title or input_path.stem.replace("_", " ").replace("-", " ").title()
         )
@@ -249,7 +298,8 @@ class MarkItMistral:
         # Process the URL
         response = self.ocr_processor.process_url(url, self.config.include_images)
 
-        # Derive title slug for image naming
+        # For URL conversions there is no local file to hash, so fall back
+        # to title slug with the output stem as disambiguator.
         ocr_title = extract_title_from_markdown(response.pages)
         image_prefix = title_to_slug(ocr_title) if ocr_title else output_path.stem
 
