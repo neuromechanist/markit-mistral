@@ -309,7 +309,7 @@ class MarkdownFormatter:
         def enhance_inline_math(match: re.Match[str]) -> str:
             math_content = match.group(1)
             # Only add spaces around operators that are NOT inside braces
-            result = []
+            result: list[str] = []
             brace_depth = 0
             i = 0
             while i < len(math_content):
