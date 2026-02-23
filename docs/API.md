@@ -348,23 +348,23 @@ from markit_mistral.exceptions import (
 try:
     converter = MarkItMistral()
     result = converter.convert_file("document.pdf")
-    
+
 except APIKeyError as e:
     print(f"API key issue: {e}")
     print("Please set MISTRAL_API_KEY environment variable")
-    
+
 except FileTooLargeError as e:
     print(f"File too large: {e}")
     print("Try processing a smaller file")
-    
+
 except UnsupportedFileTypeError as e:
     print(f"Unsupported file: {e}")
     supported = converter.get_supported_formats()
     print(f"Supported formats: {supported}")
-    
+
 except MarkItMistralError as e:
     print(f"markit-mistral error: {e}")
-    
+
 except Exception as e:
     print(f"Unexpected error: {e}")
 ```
@@ -531,4 +531,4 @@ Mistral API has rate limits. markit-mistral handles this automatically with:
 
 For issues and questions:
 - GitHub Issues: [markit-mistral issues](https://github.com/your-username/markit-mistral/issues)
-- Documentation: [Full documentation](https://github.com/your-username/markit-mistral/docs) 
+- Documentation: [Full documentation](https://github.com/your-username/markit-mistral/docs)

@@ -170,4 +170,4 @@ python3 examples/basic_usage.py
 - ✅ **Configuration** - Flexible and validated setup
 - ✅ **Logging** - Structured logging throughout
 
-The project has evolved from a basic concept to a **production-ready OCR-to-markdown conversion tool** with advanced features rivaling commercial solutions! 🎉 
+The project has evolved from a basic concept to a **production-ready OCR-to-markdown conversion tool** with advanced features rivaling commercial solutions! 🎉

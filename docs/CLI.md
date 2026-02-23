@@ -511,4 +511,4 @@ For additional help:
 2. **Version Info**: `markit-mistral --version`
 3. **GitHub Issues**: Report bugs and request features
 4. **Documentation**: Full API documentation available
-5. **Examples**: Check the examples directory for more use cases 
+5. **Examples**: Check the examples directory for more use cases

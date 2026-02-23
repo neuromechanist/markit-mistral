@@ -422,8 +422,19 @@ class OCRProcessor:
                             elif original_id:
                                 filename = original_id
                                 # Ensure filename has a recognized image extension
-                                _known_exts = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp", ".svg"}
-                                if not any(filename.lower().endswith(e) for e in _known_exts):
+                                _known_exts = {
+                                    ".jpg",
+                                    ".jpeg",
+                                    ".png",
+                                    ".gif",
+                                    ".bmp",
+                                    ".tiff",
+                                    ".webp",
+                                    ".svg",
+                                }
+                                if not any(
+                                    filename.lower().endswith(e) for e in _known_exts
+                                ):
                                     filename = f"{filename}{ext}"
                             else:
                                 filename = f"page_{page_idx + 1}_image_{len(saved_images) + 1}{ext}"

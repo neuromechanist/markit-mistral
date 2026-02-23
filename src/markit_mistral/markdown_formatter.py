@@ -9,18 +9,61 @@ logger = logging.getLogger(__name__)
 
 _MAX_SLUG_LENGTH = 50
 
+# Headings that are too generic to use as image prefixes
+_TRIVIAL_HEADINGS = {
+    "introduction",
+    "abstract",
+    "table of contents",
+    "contents",
+    "references",
+    "bibliography",
+    "acknowledgements",
+    "acknowledgments",
+    "appendix",
+    "index",
+    "preface",
+    "foreword",
+    "summary",
+    "overview",
+    "disclaimer",
+    "copyright",
+    "list of figures",
+    "list of tables",
+}
+
+
+def _is_trivial_heading(heading: str) -> bool:
+    """Check if a heading is too generic to serve as an image prefix."""
+    normalized = heading.strip().lower()
+    # Strip leading numbering like "1. Introduction" or "I. Abstract"
+    normalized = re.sub(r"^[\divxlcm]+[\.\)\s]+", "", normalized, flags=re.IGNORECASE)
+    normalized = normalized.strip()
+    return normalized in _TRIVIAL_HEADINGS
+
 
 def extract_title_from_markdown(pages: list) -> str | None:
-    """Extract the document title from the first heading in OCR pages.
+    """Extract a meaningful document title from OCR pages.
 
-    Looks for the first '# ' heading across all pages.
-    Returns None if no heading is found.
+    Searches for the first non-trivial heading. Tries H1 first, then H2.
+    Skips generic headings like 'Introduction', 'Abstract', etc.
+    Returns None if no suitable heading is found.
     """
+    # Pass 1: look for a non-trivial H1
     for page in pages:
         if hasattr(page, "markdown") and page.markdown:
-            match = re.search(r"^#\s+(.+)$", page.markdown, re.MULTILINE)
-            if match:
-                return match.group(1).strip()
+            for match in re.finditer(r"^#\s+(.+)$", page.markdown, re.MULTILINE):
+                title = match.group(1).strip()
+                if not _is_trivial_heading(title):
+                    return title
+
+    # Pass 2: look for a non-trivial H2
+    for page in pages:
+        if hasattr(page, "markdown") and page.markdown:
+            for match in re.finditer(r"^##\s+(.+)$", page.markdown, re.MULTILINE):
+                title = match.group(1).strip()
+                if not _is_trivial_heading(title):
+                    return title
+
     return None
 
 
@@ -92,7 +135,7 @@ class MarkdownFormatter:
         # Process each page
         for page_idx, page in enumerate(pages):
             if hasattr(page, "markdown") and page.markdown:
-                page_content = page.markdown
+                page_content = str(page.markdown)
 
                 # Process math equations if enabled
                 if self.preserve_math:
@@ -266,7 +309,7 @@ class MarkdownFormatter:
         def enhance_inline_math(match: re.Match[str]) -> str:
             math_content = match.group(1)
             # Only add spaces around operators that are NOT inside braces
-            result = []
+            result: list[str] = []
             brace_depth = 0
             i = 0
             while i < len(math_content):
